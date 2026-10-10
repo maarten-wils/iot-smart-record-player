@@ -5,7 +5,7 @@ import digitalio
 # GPIO pins connected to ULN2003 IN1-IN4.
 pins = [
     board.D17,
-    board.D18,
+    board.D26,
     board.D27,
     board.D22
 ]
