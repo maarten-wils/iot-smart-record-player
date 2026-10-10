@@ -8,13 +8,14 @@ IoT Essentials team project prototype.
 - 28BYJ-48 stepper motor with ULN2003
 - BH1750 light sensor via I2C
 - PWM status LED
+- 128x64 SSD1306 OLED via SPI1
 - LEGO tonearm and record-player setup
 - pushbutton kept for a later manual control function
 
 Current behaviour:
 
-- tonearm in REST -> low light -> motor stopped -> LED dim
-- tonearm in PLAY -> more light -> motor rotates -> LED bright
+- tonearm in REST -> low light -> motor stopped -> LED dim -> OLED shows `REST`
+- tonearm in PLAY -> more light -> motor rotates -> LED bright -> OLED shows `PLAY`
 - current light threshold: 4 lux
 
 ## Connections
@@ -46,6 +47,17 @@ Current behaviour:
 | Signal | GPIO12 / PWM0 | 32 |
 | GND | GND | shared GND |
 
+### OLED display
+
+| OLED | Raspberry Pi GPIO | Physical pin |
+| --- | --- | ---: |
+| GND | GND | 39 |
+| VCC | 3.3V | 1 |
+| SCL | GPIO21 / SPI1 SCLK | 40 |
+| SDA | GPIO20 / SPI1 MOSI | 38 |
+| RES | GPIO4 | 7 |
+| DC | GPIO6 | 31 |
+
 ## Tests
 
 ```bash
@@ -53,6 +65,7 @@ source ~/env/bin/activate
 python3 tests/test_stepper.py
 python3 tests/test_button.py
 python3 tests/test_lightsensor.py
+python3 tests/test_oled.py
 python3 tests/test_tonearm_stepper.py
 ```
 
