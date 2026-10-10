@@ -3,6 +3,8 @@ import board
 import busio
 import digitalio
 import pwmio
+from PIL import Image, ImageDraw, ImageFont
+import adafruit_ssd1306
 
 # Stepper GPIO pins.
 pins = [
@@ -37,6 +39,23 @@ led_pwm = pwmio.PWMOut(
     duty_cycle=10000
 )
 
+# SPI1 OLED without a physical CS pin.
+spi = busio.SPI(board.D21, board.D20, board.D19)
+oled_reset = digitalio.DigitalInOut(board.D4)
+oled_dc = digitalio.DigitalInOut(board.D6)
+oled_cs = digitalio.DigitalInOut(board.D5)
+
+oled = adafruit_ssd1306.SSD1306_SPI(
+    128,
+    64,
+    spi,
+    oled_dc,
+    oled_reset,
+    oled_cs
+)
+
+font = ImageFont.load_default()
+
 ADDRESS = 0x23
 COMMAND_HIGH_RES = bytearray([0x10])
 LIGHT_THRESHOLD = 4
@@ -54,10 +73,23 @@ def get_light_level(i2c_bus, addr):
     return ((result[0] << 8) | result[1]) / 1.2
 
 
+def show_status(status):
+    image = Image.new("1", (oled.width, oled.height))
+    draw = ImageDraw.Draw(image)
+
+    draw.text((10, 10), "IoT Smart", font=font, fill=255)
+    draw.text((10, 25), "Record Player", font=font, fill=255)
+    draw.text((10, 45), status, font=font, fill=255)
+
+    oled.image(image)
+    oled.show()
+
+
 step_number = 0
 play = False
 first_reading = True
 last_sensor_read = 0
+last_status = ""
 
 print("Starting tonearm and stepper test...")
 
@@ -81,6 +113,12 @@ try:
                             print(f"{lux:.2f} lux -> PLAY")
                         else:
                             print(f"{lux:.2f} lux -> REST")
+
+                        status = "PLAY" if play else "REST"
+
+                        if status != last_status:
+                            show_status(status)
+                            last_status = status
 
                 finally:
                     i2c.unlock()
@@ -117,4 +155,8 @@ finally:
 
     led_pwm.duty_cycle = 0
     led_pwm.deinit()
+
+    oled.fill(0)
+    oled.show()
+
     i2c.deinit()
