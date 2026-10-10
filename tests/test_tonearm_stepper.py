@@ -2,6 +2,7 @@ import time
 import board
 import busio
 import digitalio
+import pwmio
 
 # Stepper GPIO pins.
 pins = [
@@ -28,6 +29,13 @@ steps = [
 
 # Start I2C communication with the BH1750.
 i2c = busio.I2C(board.D3, board.D2)
+
+# PWM status LED on GPIO12.
+led_pwm = pwmio.PWMOut(
+    board.D12,
+    frequency=5000,
+    duty_cycle=10000
+)
 
 ADDRESS = 0x23
 COMMAND_HIGH_RES = bytearray([0x10])
@@ -80,7 +88,9 @@ try:
             last_sensor_read = current_time
 
         if play:
-            # Rotate the motor while the tonearm is in PLAY.
+            # Bright LED and rotating motor in PLAY.
+            led_pwm.duty_cycle = 50000
+
             step = steps[step_number % 4]
 
             for output, value in zip(outputs, step):
@@ -89,7 +99,9 @@ try:
             step_number += 1
 
         else:
-            # Stop the motor in REST.
+            # Dim LED and stopped motor in REST.
+            led_pwm.duty_cycle = 10000
+
             for output in outputs:
                 output.value = False
 
@@ -103,4 +115,6 @@ finally:
         output.value = False
         output.deinit()
 
+    led_pwm.duty_cycle = 0
+    led_pwm.deinit()
     i2c.deinit()
