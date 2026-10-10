@@ -77,9 +77,21 @@ def show_status(status):
     image = Image.new("1", (oled.width, oled.height))
     draw = ImageDraw.Draw(image)
 
-    draw.text((10, 10), "IoT Smart", font=font, fill=255)
-    draw.text((10, 25), "Record Player", font=font, fill=255)
-    draw.text((10, 45), status, font=font, fill=255)
+    draw.text((10, 10), "Record Player", font=font, fill=255)
+
+    if status == "PLAY":
+        draw.text((10, 30), "PLAY", font=font, fill=255)
+
+        # Simple music note.
+        draw.ellipse((90, 38, 98, 46), outline=255, fill=255)
+        draw.line((98, 42, 98, 25), fill=255)
+        draw.line((98, 25, 106, 28), fill=255)
+
+    else:
+        draw.text((10, 30), "REST", font=font, fill=255)
+
+        # Simple sleep symbol.
+        draw.text((90, 25), "Zzz", font=font, fill=255)
 
     oled.image(image)
     oled.show()
