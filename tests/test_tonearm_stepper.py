@@ -7,7 +7,7 @@ import pwmio
 # Stepper GPIO pins.
 pins = [
     board.D17,
-    board.D18,
+    board.D26,
     board.D27,
     board.D22
 ]
