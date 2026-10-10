@@ -1,80 +1,47 @@
 # Testing
 
-## Stepper motor standalone test
+Activate the environment first:
 
-Command:
+```bash
+source ~/env/bin/activate
+```
+
+## Stepper
 
 ```bash
 python3 tests/test_stepper.py
 ```
 
-Status: **PASS**
+Status: **PASS**  
+Motor rotates the LEGO coaster and stops correctly.
 
-Verified behaviour:
-
-- ULN2003 inputs switch in sequence
-- stepper motor rotates
-- LEGO coaster rotates
-- motor stops after the test
-
-## Pushbutton standalone test
-
-Command:
+## Pushbutton
 
 ```bash
 python3 tests/test_button.py
 ```
 
-Status: **PASS**
+Status: **PASS**  
+Reports `PRESSED` and `RELEASED`. Kept for a later manual control function.
 
-The pushbutton correctly reports RELEASED and PRESSED. It is kept for a later manual control function.
-
-## BH1750 standalone test
-
-Command:
+## BH1750
 
 ```bash
 python3 tests/test_lightsensor.py
 ```
 
-Status: **PASS**
+Status: **PASS**  
+Sensor responds on I2C and returns changing lux values.
 
-The BH1750 was detected on I2C address `0x23` and returns changing lux values.
-
-## Tonearm detection test
-
-Command:
-
-```bash
-python3 tests/test_tonearm.py
-```
-
-Status: **PASS**
-
-After mechanical adjustment the measured values were clearly separated:
-
-- REST: approximately 22-27 lux
-- PLAY: approximately 2.5 lux
-
-A threshold of 10 lux is used:
-
-- below 10 lux -> PLAY
-- 10 lux or higher -> REST
-
-## Tonearm + stepper integration test
-
-Command:
+## Tonearm + stepper
 
 ```bash
 python3 tests/test_tonearm_stepper.py
 ```
 
-Status: **PASS**
+Current calibration:
 
-Verified behaviour:
+- below 4 lux -> REST -> motor stopped
+- 4 lux or higher -> PLAY -> motor rotates
 
-- REST -> motor stopped
-- PLAY -> motor rotates
-- returning to REST -> motor stops
-
-The integration combines the course-based BH1750 I2C reading with the course-based wave-drive stepper control. The threshold and PLAY/REST decision are project-specific application logic.
+The BH1750 reading and stepper control are based on the IoT Essentials course examples. The threshold is project-specific application logic.

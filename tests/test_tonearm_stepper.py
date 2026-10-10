@@ -31,9 +31,7 @@ i2c = busio.I2C(board.D3, board.D2)
 
 ADDRESS = 0x23
 COMMAND_HIGH_RES = bytearray([0x10])
-
-# Threshold measured with the LEGO tonearm.
-LIGHT_THRESHOLD = 10
+LIGHT_THRESHOLD = 4
 
 
 def get_light_level(i2c_bus, addr):
@@ -69,7 +67,7 @@ try:
                     if first_reading:
                         first_reading = False
                     else:
-                        play = lux < LIGHT_THRESHOLD
+                        play = lux >= LIGHT_THRESHOLD
 
                         if play:
                             print(f"{lux:.2f} lux -> PLAY")

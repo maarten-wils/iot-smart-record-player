@@ -4,25 +4,19 @@ IoT Essentials team project prototype.
 
 ## Current prototype
 
-The current prototype uses:
-
 - Raspberry Pi 5
-- 28BYJ-48 5V stepper motor
-- ULN2003 driver board
-- BH1750 I2C light sensor
-- LEGO record-player prototype
+- 28BYJ-48 stepper motor with ULN2003
+- BH1750 light sensor via I2C
+- LEGO tonearm and record-player setup
+- pushbutton kept for a later manual control function
 
-The stepper rotates the coaster. The BH1750 is built into the LEGO setup and detects the tonearm position by measuring the amount of light reaching the sensor.
+Current behaviour:
 
-Current tested behaviour:
+- tonearm in REST -> low light -> motor stopped
+- tonearm in PLAY -> more light -> motor rotates
+- current light threshold: 4 lux
 
-- tonearm in REST: higher light value, motor stopped
-- tonearm in PLAY: lower light value, motor rotates
-- current threshold: 10 lux
-
-The pushbutton standalone test is kept for a later manual control function.
-
-## GPIO mapping
+## Connections
 
 ### Stepper motor / ULN2003
 
@@ -46,20 +40,12 @@ The pushbutton standalone test is kept for a later manual control function.
 
 ## Tests
 
-Activate the existing Python environment:
-
 ```bash
 source ~/env/bin/activate
-```
-
-Useful tests:
-
-```bash
 python3 tests/test_stepper.py
 python3 tests/test_button.py
 python3 tests/test_lightsensor.py
-python3 tests/test_tonearm.py
 python3 tests/test_tonearm_stepper.py
 ```
 
-See `docs/setup.md` and `docs/testing.md` for the current hardware setup and verified test results.
+See `docs/setup.md` and `docs/testing.md` for the current setup and test status.

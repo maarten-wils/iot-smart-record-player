@@ -2,7 +2,7 @@
 
 ## Stepper motor
 
-The 28BYJ-48 stepper motor is connected to a ULN2003 driver board.
+28BYJ-48 with ULN2003:
 
 | ULN2003 | Raspberry Pi GPIO | Physical pin |
 | --- | --- | ---: |
@@ -13,13 +13,11 @@ The 28BYJ-48 stepper motor is connected to a ULN2003 driver board.
 | VCC | 5V | 2 |
 | GND | GND | 6 |
 
-The motor is connected to the 5-pin motor connector on the ULN2003 board.
+The stepper uses wave drive with a 10 ms delay between steps, following the IoT Essentials course approach.
 
-The stepper test uses wave drive with a 10 ms delay between steps, following the IoT Essentials course approach.
+## BH1750
 
-## BH1750 light sensor
-
-The BH1750 is connected through I2C1.
+Connected through I2C1:
 
 | BH1750 | Raspberry Pi | Physical pin |
 | --- | --- | ---: |
@@ -28,20 +26,11 @@ The BH1750 is connected through I2C1.
 | VCC | 3.3V | 17 |
 | GND | GND | 14 |
 
-The sensor is built into the LEGO record-player setup. The tonearm changes how much light reaches the sensor.
+The LEGO tonearm changes the amount of light reaching the sensor.
 
-Current measured values after mechanical adjustment:
+Current calibration:
 
-- REST: approximately 22-27 lux
-- PLAY: approximately 2.5 lux
-- threshold: 10 lux
+- REST -> below 4 lux
+- PLAY -> 4 lux or higher
 
-## Pushbutton
-
-The standalone pushbutton test is kept for later use. The previous direct button-to-stepper integration is no longer part of the current design.
-
-## Notes
-
-- Power off the Raspberry Pi before changing wiring.
-- `board`, `digitalio` and `busio` are used in the same style as the IoT Essentials course examples.
-- The BH1750 uses I2C address `0x23` and high-resolution command `0x10` as in the course example.
+The BH1750 uses I2C address `0x23` and command `0x10`, matching the course example.
