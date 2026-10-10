@@ -1,4 +1,5 @@
 import time
+import subprocess
 import board
 import busio
 import digitalio
@@ -59,6 +60,7 @@ font = ImageFont.load_default()
 ADDRESS = 0x23
 COMMAND_HIGH_RES = bytearray([0x10])
 LIGHT_THRESHOLD = 4
+AUDIO_FILE = "audio/avalon-1920.ogg"
 
 
 def get_light_level(i2c_bus, addr):
@@ -82,15 +84,13 @@ def show_status(status):
     if status == "PLAY":
         draw.text((10, 30), "PLAY", font=font, fill=255)
 
-        # simpele muzieknoot
-        draw.ellipse((90, 38, 98, 46), outline=255, fill=255)   # bolletje
-        draw.line((98, 42, 98, 25), fill=255)                   # stok
-        draw.line((98, 25, 106, 28), fill=255)                  # vlagje
+        # Simple music note.
+        draw.ellipse((90, 38, 98, 46), outline=255, fill=255)
+        draw.line((98, 42, 98, 25), fill=255)
+        draw.line((98, 25, 106, 28), fill=255)
 
     else:
         draw.text((10, 30), "REST", font=font, fill=255)
-
-        # simpele Zzz
         draw.text((90, 25), "Zzz", font=font, fill=255)
 
     oled.image(image)
@@ -102,6 +102,7 @@ play = False
 first_reading = True
 last_sensor_read = 0
 last_status = ""
+player = None
 
 print("Starting tonearm and stepper test...")
 
@@ -130,6 +131,14 @@ try:
 
                         if status != last_status:
                             show_status(status)
+
+                            if status == "PLAY":
+                                player = subprocess.Popen(["pw-play", AUDIO_FILE])
+                            elif player is not None:
+                                player.terminate()
+                                player.wait()
+                                player = None
+
                             last_status = status
 
                 finally:
@@ -161,6 +170,10 @@ except KeyboardInterrupt:
     print("\nStopped by user.")
 
 finally:
+    if player is not None:
+        player.terminate()
+        player.wait()
+
     for output in outputs:
         output.value = False
         output.deinit()
