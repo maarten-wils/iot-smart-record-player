@@ -6,43 +6,19 @@ Activate the environment first:
 source ~/env/bin/activate
 ```
 
-## Stepper
+## Standalone tests
 
 ```bash
 python3 tests/test_stepper.py
-```
-
-Status: **PASS**  
-Motor rotates the LEGO coaster and stops correctly.
-
-## Pushbutton
-
-```bash
 python3 tests/test_button.py
-```
-
-Status: **PASS**  
-Reports `PRESSED` and `RELEASED`. Kept for a later manual control function.
-
-## BH1750
-
-```bash
 python3 tests/test_lightsensor.py
-```
-
-Status: **PASS**  
-Sensor responds on I2C and returns changing lux values.
-
-## OLED
-
-```bash
 python3 tests/test_oled.py
+python3 tests/test_audio.py
 ```
 
-Status: **PASS**  
-The SSD1306 OLED works on SPI1 and displays the standalone test text.
+Status: **PASS**
 
-## Tonearm + stepper + PWM + OLED
+## Integrated record-player test
 
 ```bash
 python3 tests/test_tonearm_stepper.py
@@ -50,10 +26,19 @@ python3 tests/test_tonearm_stepper.py
 
 Status: **PASS**
 
-Current calibration:
+- below 4 lux -> REST -> motor stopped -> PWM LED dim -> OLED `REST` -> audio stopped
+- 4 lux or higher -> PLAY -> platter rotates in the correct direction -> PWM LED bright -> OLED `PLAY` -> Bluetooth audio starts
+- Ctrl+C -> motor stopped -> LED off -> OLED cleared -> audio stopped
 
-- below 4 lux -> REST -> motor stopped -> PWM LED dim -> OLED shows `REST`
-- 4 lux or higher -> PLAY -> motor rotates -> PWM LED bright -> OLED shows `PLAY`
-- Ctrl+C -> motor stopped -> PWM LED off -> OLED cleared
+Course-based code:
 
-The BH1750 reading, stepper control, PWM output and OLED code are based on the IoT Essentials course examples. The threshold and REST/PLAY behaviour are project-specific application logic.
+- stepper: wave drive with digital outputs
+- BH1750: I2C with `busio` and `writeto_then_readfrom`
+- PWM LED: `pwmio.PWMOut`
+- OLED: Adafruit SSD1306 + PIL over SPI
+
+Project-specific logic:
+
+- 4 lux REST/PLAY threshold
+- LEGO tonearm behaviour
+- local Bluetooth audio via `pw-play`
