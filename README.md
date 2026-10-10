@@ -2,18 +2,29 @@
 
 IoT Essentials team project prototype.
 
-## Current milestone
+## Current prototype
 
-Standalone stepper motor prototype using:
+The current prototype uses:
 
 - Raspberry Pi 5
 - 28BYJ-48 5V stepper motor
 - ULN2003 driver board
-- GPIO expansion board / Pi Cobbler
+- BH1750 I2C light sensor
+- LEGO record-player prototype
 
-The current prototype has been tested successfully: the motor starts, rotates a lightweight coaster and stops correctly.
+The stepper rotates the coaster. The BH1750 is built into the LEGO setup and detects the tonearm position by measuring the amount of light reaching the sensor.
 
-## Current GPIO mapping
+Current tested behaviour:
+
+- tonearm in REST: higher light value, motor stopped
+- tonearm in PLAY: lower light value, motor rotates
+- current threshold: 10 lux
+
+The pushbutton standalone test is kept for a later manual control function.
+
+## GPIO mapping
+
+### Stepper motor / ULN2003
 
 | ULN2003 | Raspberry Pi GPIO | Physical pin |
 | --- | --- | ---: |
@@ -24,13 +35,31 @@ The current prototype has been tested successfully: the motor starts, rotates a 
 | VCC | 5V | 2 |
 | GND | GND | 6 |
 
-## Run the stepper test
+### BH1750
 
-Activate the existing Python environment and run:
+| BH1750 | Raspberry Pi | Physical pin |
+| --- | --- | ---: |
+| SDA | GPIO2 / SDA1 | 3 |
+| SCL | GPIO3 / SCL1 | 5 |
+| VCC | 3.3V | 17 |
+| GND | GND | 14 |
+
+## Tests
+
+Activate the existing Python environment:
 
 ```bash
 source ~/env/bin/activate
-python3 tests/test_stepper.py
 ```
 
-See `docs/setup.md` and `docs/testing.md` for the current hardware setup and verified test result.
+Useful tests:
+
+```bash
+python3 tests/test_stepper.py
+python3 tests/test_button.py
+python3 tests/test_lightsensor.py
+python3 tests/test_tonearm.py
+python3 tests/test_tonearm_stepper.py
+```
+
+See `docs/setup.md` and `docs/testing.md` for the current hardware setup and verified test results.
