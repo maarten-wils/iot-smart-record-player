@@ -37,7 +37,7 @@ image = Image.new("1", (oled.width, oled.height))
 draw = ImageDraw.Draw(image)
 font = ImageFont.load_default()
 
-draw.text((10, 10), "IoT Smart", font=font, fill=255)
+draw.text((10, 10), "Tibo is gek", font=font, fill=255)
 draw.text((10, 25), "Record Player", font=font, fill=255)
 draw.text((10, 40), "OLED TEST", font=font, fill=255)
 

@@ -82,15 +82,15 @@ def show_status(status):
     if status == "PLAY":
         draw.text((10, 30), "PLAY", font=font, fill=255)
 
-        # Simple music note.
-        draw.ellipse((90, 38, 98, 46), outline=255, fill=255)
-        draw.line((98, 42, 98, 25), fill=255)
-        draw.line((98, 25, 106, 28), fill=255)
+        # simpele muzieknoot
+        draw.ellipse((90, 38, 98, 46), outline=255, fill=255)   # bolletje
+        draw.line((98, 42, 98, 25), fill=255)                   # stok
+        draw.line((98, 25, 106, 28), fill=255)                  # vlagje
 
     else:
         draw.text((10, 30), "REST", font=font, fill=255)
 
-        # Simple sleep symbol.
+        # simpele Zzz
         draw.text((90, 25), "Zzz", font=font, fill=255)
 
     oled.image(image)
