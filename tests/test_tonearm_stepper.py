@@ -60,7 +60,7 @@ font = ImageFont.load_default()
 ADDRESS = 0x23
 COMMAND_HIGH_RES = bytearray([0x10])
 LIGHT_THRESHOLD = 4
-AUDIO_FILE = "audio/avalon-1920.ogg"
+AUDIO_FILE = "audio/metal.mp3"
 
 
 def get_light_level(i2c_bus, addr):
@@ -82,12 +82,13 @@ def show_status(status):
     draw.text((10, 10), "Record Player", font=font, fill=255)
 
     if status == "PLAY":
-        draw.text((10, 30), "PLAY", font=font, fill=255)
+        draw.text((10, 28), "METAL MODE", font=font, fill=255)
+        draw.text((10, 44), "SORRY NEIGHBORS", font=font, fill=255)
 
         # Simple music note.
-        draw.ellipse((90, 38, 98, 46), outline=255, fill=255)
-        draw.line((98, 42, 98, 25), fill=255)
-        draw.line((98, 25, 106, 28), fill=255)
+        draw.ellipse((108, 38, 116, 46), outline=255, fill=255)
+        draw.line((116, 42, 116, 25), fill=255)
+        draw.line((116, 25, 124, 28), fill=255)
 
     else:
         draw.text((10, 30), "REST", font=font, fill=255)
