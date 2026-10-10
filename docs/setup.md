@@ -44,6 +44,19 @@ The BH1750 uses I2C address `0x23` and command `0x10`, matching the course examp
 
 The LED is dim in REST and bright in PLAY using `pwmio.PWMOut`.
 
-## Reserved for SPI OLED
+## OLED display
 
-GPIO18 is kept free for the course SPI1 OLED setup.
+128x64 SSD1306 OLED using the secondary SPI1 bus:
+
+| OLED | Raspberry Pi GPIO | Physical pin |
+| --- | --- | ---: |
+| GND | GND | 39 |
+| VCC | 3.3V | 1 |
+| SCL | GPIO21 / SPI1 SCLK | 40 |
+| SDA | GPIO20 / SPI1 MOSI | 38 |
+| RES | GPIO4 | 7 |
+| DC | GPIO6 | 31 |
+
+The OLED has no external CS pin. SPI1 is enabled with `dtoverlay=spi1-1cs` in `/boot/firmware/config.txt`.
+
+The display shows `REST` or `PLAY` based on the same BH1750 state used for the motor and PWM LED.
