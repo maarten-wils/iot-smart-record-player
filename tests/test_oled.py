@@ -11,9 +11,9 @@ spi = busio.SPI(board.D21, board.D20, board.D19)
 oled_reset = digitalio.DigitalInOut(board.D4)
 oled_dc = digitalio.DigitalInOut(board.D6)
 
-# The OLED has no physical CS pin.
-# GPIO18 is used as the SPI1 CS object required by the library.
-oled_cs = digitalio.DigitalInOut(board.D18)
+# This OLED has no physical CS connection.
+# The SSD1306 library still requires a CS object, so GPIO5 is used only in software.
+oled_cs = digitalio.DigitalInOut(board.D5)
 
 WIDTH = 128
 HEIGHT = 64
