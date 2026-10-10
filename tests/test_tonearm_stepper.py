@@ -60,6 +60,8 @@ font = ImageFont.load_default()
 ADDRESS = 0x23
 COMMAND_HIGH_RES = bytearray([0x10])
 LIGHT_THRESHOLD = 4
+
+# Local audio playback is the only part outside the course examples.
 AUDIO_FILE = "audio/avalon-1920.ogg"
 
 
@@ -155,7 +157,8 @@ try:
             for output, value in zip(outputs, step):
                 output.value = value
 
-            step_number += 1
+            # Reverse step order so the platter turns in the correct direction.
+            step_number -= 1
 
         else:
             # Dim LED and stopped motor in REST.
