@@ -7,13 +7,14 @@ IoT Essentials team project prototype.
 - Raspberry Pi 5
 - 28BYJ-48 stepper motor with ULN2003
 - BH1750 light sensor via I2C
+- PWM status LED
 - LEGO tonearm and record-player setup
 - pushbutton kept for a later manual control function
 
 Current behaviour:
 
-- tonearm in REST -> low light -> motor stopped
-- tonearm in PLAY -> more light -> motor rotates
+- tonearm in REST -> low light -> motor stopped -> LED dim
+- tonearm in PLAY -> more light -> motor rotates -> LED bright
 - current light threshold: 4 lux
 
 ## Connections
@@ -23,7 +24,7 @@ Current behaviour:
 | ULN2003 | Raspberry Pi GPIO | Physical pin |
 | --- | --- | ---: |
 | IN1 | GPIO17 | 11 |
-| IN2 | GPIO18 | 12 |
+| IN2 | GPIO26 | 37 |
 | IN3 | GPIO27 | 13 |
 | IN4 | GPIO22 | 15 |
 | VCC | 5V | 2 |
@@ -37,6 +38,13 @@ Current behaviour:
 | SCL | GPIO3 / SCL1 | 5 |
 | VCC | 3.3V | 17 |
 | GND | GND | 14 |
+
+### PWM status LED
+
+| LED | Raspberry Pi GPIO | Physical pin |
+| --- | --- | ---: |
+| Signal | GPIO12 / PWM0 | 32 |
+| GND | GND | shared GND |
 
 ## Tests
 
