@@ -7,7 +7,7 @@
 | ULN2003 | Raspberry Pi GPIO | Physical pin |
 | --- | --- | ---: |
 | IN1 | GPIO17 | 11 |
-| IN2 | GPIO18 | 12 |
+| IN2 | GPIO26 | 37 |
 | IN3 | GPIO27 | 13 |
 | IN4 | GPIO22 | 15 |
 | VCC | 5V | 2 |
@@ -34,3 +34,16 @@ Current calibration:
 - PLAY -> 4 lux or higher
 
 The BH1750 uses I2C address `0x23` and command `0x10`, matching the course example.
+
+## PWM status LED
+
+| LED | Raspberry Pi GPIO | Physical pin |
+| --- | --- | ---: |
+| Signal | GPIO12 / PWM0 | 32 |
+| GND | GND | shared GND |
+
+The LED is dim in REST and bright in PLAY using `pwmio.PWMOut`.
+
+## Reserved for SPI OLED
+
+GPIO18 is kept free for the course SPI1 OLED setup.
