@@ -35,7 +35,7 @@ STEPPER_REVERSE = True     # reversed step order = correct platter direction
 I2C_SCL = "D3"
 I2C_SDA = "D2"
 BH1750_ADDRESS = 0x23
-LIGHT_THRESHOLD = 4        # lux: below = tonearm REST, above = PLAY
+LIGHT_THRESHOLD = 100        # lux: below = tonearm REST, above = PLAY
 
 # PWM status LED
 LED_PIN = "D12"

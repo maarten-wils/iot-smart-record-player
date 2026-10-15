@@ -81,6 +81,9 @@ def message(client, topic, msg):
     player_status = msg
 
 
+CONNECT_TIMEOUT = 2     # s: setting up the connection over WiFi needs time
+LOOP_TIMEOUT = 0.05     # s: afterwards short timeouts keep sensor + button responsive
+
 mqtt_client = MQTT.MQTT(
     broker=MQTT_HOST,
     port=MQTT_PORT,
@@ -88,14 +91,26 @@ mqtt_client = MQTT.MQTT(
     socket_pool=pool,
     is_ssl=False,          # local broker, no TLS
     keep_alive=60,
-    socket_timeout=0.05,   # short timeouts so the sensor loop stays responsive
+    socket_timeout=CONNECT_TIMEOUT,
 )
 mqtt_client.on_connect = connect
 mqtt_client.on_disconnect = disconnect
 mqtt_client.on_message = message
 
+
+def mqtt_connect(reconnect=False):
+    """Connect with a long timeout, then switch to a short one for the main loop."""
+    mqtt_client._socket_timeout = CONNECT_TIMEOUT
+    if reconnect:
+        mqtt_client.reconnect()
+    else:
+        mqtt_client.connect()
+    mqtt_client._socket_timeout = LOOP_TIMEOUT
+    mqtt_client._sock.settimeout(LOOP_TIMEOUT)
+
+
 print("Attempting to connect to", MQTT_HOST)
-mqtt_client.connect()
+mqtt_connect()
 
 
 # ---------- Helpers ----------
@@ -132,7 +147,7 @@ last_publish = 0
 while True:
     try:
         # Handle incoming messages (status from the Pi)
-        mqtt_client.loop(timeout=0.05)
+        mqtt_client.loop(timeout=LOOP_TIMEOUT)
 
         now = time.monotonic()
 
@@ -178,6 +193,6 @@ while True:
         led.value = False
         time.sleep(2)
         try:
-            mqtt_client.reconnect()
+            mqtt_connect(reconnect=True)
         except Exception as e2:
             print("Reconnect failed:", e2)
