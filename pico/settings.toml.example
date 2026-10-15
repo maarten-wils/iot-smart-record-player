@@ -1,0 +1,6 @@
+# Copy this file to the Pico as settings.toml and fill in your values.
+# Do NOT commit the real settings.toml (it contains your WiFi password).
+CIRCUITPY_WIFI_SSID = "your-wifi-name"
+CIRCUITPY_WIFI_PASSWORD = "your-wifi-password"
+MQTT_HOST = "192.168.1.50"   # IP of the Raspberry Pi: run `hostname -I` on the Pi
+MQTT_PORT = 1883

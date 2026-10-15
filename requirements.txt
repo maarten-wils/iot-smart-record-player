@@ -1,0 +1,6 @@
+# Raspberry Pi: pip install -r requirements.txt (inside ~/env)
+adafruit-blinka
+adafruit-circuitpython-ssd1306
+adafruit-circuitpython-mcp3xxx
+pillow
+paho-mqtt>=2.0
