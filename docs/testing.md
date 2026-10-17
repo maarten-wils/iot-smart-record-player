@@ -1,44 +1,51 @@
-# Testing
+# Testing status
 
-Activate the environment first:
+Only physically verified behaviour is marked PASS.
 
-```bash
-source ~/env/bin/activate
-```
+## Pico hardware
 
-## Standalone tests
+| Test | Status | Evidence |
+| --- | --- | --- |
+| BH1750 I2C | PASS | changing lux values |
+| HC-SR04 | PASS | changing distance + TOGGLE command |
+| pushbutton | PASS | NEXT and POWER commands |
+| MCP3008 + pot | PASS | 0-100% volume range |
+| RC522 | PASS | UID read + debounce |
+| MCP3008 + RC522 shared SPI0 | PASS | both work together |
+| PWM LED | PASS | PLAY bright, REST/PAUSED dim |
+| OLED SPI1 | PASS | PLAY on, REST off, PAUSED blinking |
+| stepper standalone | PASS | rotates with course-style wave drive |
+| stepper in full Pico runtime | OPEN | MQTT timing causes poor motion |
 
-```bash
-python3 tests/test_stepper.py
-python3 tests/test_button.py
-python3 tests/test_lightsensor.py
-python3 tests/test_oled.py
-python3 tests/test_audio.py
-```
+## End-to-end
 
-Status: **PASS**
+| Flow | Status |
+| --- | --- |
+| Pico sensors -> MQTT -> Pi | PASS |
+| Pi status -> MQTT -> Pico LED/OLED | PASS |
+| MCP3008 -> Pico -> MQTT -> Pi -> Bluetooth volume | PASS |
+| BH1750 -> Pico -> MQTT -> Pi REST/PLAY -> audio | PASS |
+| Bluetooth speaker connection + `pw-play` | PASS |
+| RFID -> final record selection | OPEN |
+| ThingSpeak final run | OPEN; credentials were not loaded during last test |
+| full flow with stepper | OPEN |
 
-## Integrated record-player test
+## Current calibration
 
-```bash
-python3 tests/test_tonearm_stepper.py
-```
+`LIGHT_THRESHOLD = 100` lux is temporary. During bench testing the sensor crossed this value easily, but values changed strongly with sensor position and ambient light.
 
-Status: **PASS**
+Final REST/PLAY thresholds and possible hysteresis must be calibrated only after the BH1750 is mounted in the 3D model.
 
-- below 4 lux -> REST -> motor stopped -> PWM LED dim -> OLED `REST` -> audio stopped
-- 4 lux or higher -> PLAY -> platter rotates in the correct direction -> PWM LED bright -> OLED `PLAY` -> Bluetooth audio starts
-- Ctrl+C -> motor stopped -> LED off -> OLED cleared -> audio stopped
+## Minimal retained Pico tests
 
-Course-based code:
+- `test_bh1750_pico.py`
+- `test_hcsr04.py`
+- `test_button.py`
+- `test_mcp3008_pico.py`
+- `test_rfid_pico.py`
+- `test_oled_displayio_pico.py`
+- `test_pwm_led_pico.py`
+- `test_stepper_pico.py`
+- `test_wifi_mqtt.py`
 
-- stepper: wave drive with digital outputs
-- BH1750: I2C with `busio` and `writeto_then_readfrom`
-- PWM LED: `pwmio.PWMOut`
-- OLED: Adafruit SSD1306 + PIL over SPI
-
-Project-specific logic:
-
-- 4 lux REST/PLAY threshold
-- LEGO tonearm behaviour
-- local Bluetooth audio via `pw-play`
+These are standalone verification scripts. `pico/code.py` is the integrated runtime.
