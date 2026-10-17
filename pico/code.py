@@ -147,17 +147,14 @@ last_oled_state = None
 # ---------- BH1750 ----------
 
 i2c = busio.I2C(
-    board.GP1,   # SCL
-    board.GP0    # SDA
+    board.GP1,
+    board.GP0
 )
 
 while not i2c.try_lock():
     pass
 
-i2c.writeto(
-    BH1750_ADDRESS,
-    bytes([0x10])
-)
+i2c.writeto(BH1750_ADDRESS, bytes([0x10]))
 i2c.unlock()
 
 time.sleep(0.2)
@@ -169,10 +166,7 @@ def read_lux():
     while not i2c.try_lock():
         pass
 
-    i2c.readfrom_into(
-        BH1750_ADDRESS,
-        data
-    )
+    i2c.readfrom_into(BH1750_ADDRESS, data)
     i2c.unlock()
 
     value = (data[0] << 8) | data[1]
@@ -187,12 +181,10 @@ spi = busio.SPI(
     MISO=board.GP16
 )
 
-# MCP3008
 mcp_cs = digitalio.DigitalInOut(board.GP17)
 mcp = MCP.MCP3008(spi, mcp_cs)
 volume_channel = AnalogIn(mcp, MCP.P0)
 
-# RC522
 rfid_cs = digitalio.DigitalInOut(board.GP20)
 rfid_rst = digitalio.DigitalInOut(board.GP21)
 rfid = mfrc522.MFRC522(spi, rfid_cs, rfid_rst)
@@ -287,10 +279,7 @@ def read_rfid():
         return None
 
     return "{:02x}{:02x}{:02x}{:02x}".format(
-        uid[0],
-        uid[1],
-        uid[2],
-        uid[3]
+        uid[0], uid[1], uid[2], uid[3]
     )
 
 
@@ -302,7 +291,7 @@ def send(command):
 def update_outputs(now):
     global last_oled_state
 
-    # Keep Robin's onboard status LED behaviour.
+    # Robin's onboard LED behaviour.
     if player_status == "PLAY":
         led.value = True
     elif player_status == "PAUSED":
@@ -310,20 +299,20 @@ def update_outputs(now):
     else:
         led.value = False
 
-    # External PWM LED: bright in PLAY, dim otherwise.
+    # External PWM LED: bright only in PLAY, dim otherwise.
     if player_status == "PLAY":
         status_led.duty_cycle = LED_BRIGHT
     else:
         status_led.duty_cycle = LED_DIM
 
-    # Simple OLED status test without extra text libraries.
-    # PLAY = white screen, PAUSED = blinking screen, other states = black.
+    # This OLED is visually inverted with the current DisplayIO palette.
+    # PLAY therefore uses bitmap value 0, REST uses 1.
     if player_status == "PLAY":
-        oled_state = 1
-    elif player_status == "PAUSED":
-        oled_state = 1 if int(now * 2) % 2 == 0 else 0
-    else:
         oled_state = 0
+    elif player_status == "PAUSED":
+        oled_state = 0 if int(now * 2) % 2 == 0 else 1
+    else:
+        oled_state = 1
 
     if oled_state != last_oled_state:
         oled_bitmap.fill(oled_state)
@@ -344,12 +333,9 @@ rfid_missing_since = None
 
 while True:
     try:
-        # Existing Robin MQTT handling.
         mqtt_client.loop(timeout=LOOP_TIMEOUT)
-
         now = time.monotonic()
 
-        # --- HC-SR04 gesture ---
         distance = read_distance()
 
         if distance is not None and distance < TRIGGER_DISTANCE:
@@ -362,7 +348,6 @@ while True:
             close_since = None
             armed = True
 
-        # --- Button ---
         if not button.value:
             if pressed_since is None:
                 pressed_since = now
@@ -372,20 +357,15 @@ while True:
         else:
             if pressed_since is not None:
                 held = now - pressed_since
-
                 if not long_sent and held >= DEBOUNCE:
                     send("NEXT")
 
             pressed_since = None
             long_sent = False
 
-        # --- Publish Pico sensor values ---
         if now - last_publish >= PUBLISH_INTERVAL:
             if distance is not None:
-                mqtt_client.publish(
-                    TOPIC_DISTANCE,
-                    "%.1f" % distance
-                )
+                mqtt_client.publish(TOPIC_DISTANCE, "%.1f" % distance)
 
             lux = read_lux()
             volume = read_volume()
@@ -394,17 +374,13 @@ while True:
             mqtt_client.publish(TOPIC_VOLUME, str(volume))
 
             print(
-                "Distance:",
-                distance,
-                "| Lux:",
-                "%.1f" % lux,
-                "| Volume:",
-                volume
+                "Distance:", distance,
+                "| Lux:", "%.1f" % lux,
+                "| Volume:", volume
             )
 
             last_publish = now
 
-        # --- RFID ---
         if now - last_rfid_check >= RFID_INTERVAL:
             uid = read_rfid()
 
@@ -433,7 +409,7 @@ while True:
         print("MQTT error:", e, "- reconnecting")
         led.value = False
         status_led.duty_cycle = LED_DIM
-        oled_bitmap.fill(0)
+        oled_bitmap.fill(1)
         time.sleep(2)
 
         try:
