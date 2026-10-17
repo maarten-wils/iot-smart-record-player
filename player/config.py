@@ -70,8 +70,9 @@ TOPIC_COMMAND = "recordplayer/remote/command"    # Pico -> Pi: TOGGLE / NEXT / P
 TOPIC_DISTANCE = "recordplayer/remote/distance"  # Pico -> Pi: cm
 TOPIC_STATUS = "recordplayer/status"             # Pi -> all: STANDBY / REST / PLAY / PAUSED
 TOPIC_NOW_PLAYING = "recordplayer/now_playing"   # Pi -> all: JSON artist/title/fact
-TOPIC_LUX = "recordplayer/lux"                   # Pi -> all
-TOPIC_VOLUME = "recordplayer/volume"             # Pi -> all: %
+TOPIC_LUX = "recordplayer/lux"                   # Pico -> Pi: lux
+TOPIC_VOLUME = "recordplayer/volume"             # Pico -> Pi: %
+TOPIC_RFID = "recordplayer/rfid"                 # Pico -> Pi: RFID UID
 
 # ---------- ThingSpeak (online dashboard, via MQTT like Lab 4) ----------
 THINGSPEAK_HOST = os.getenv("THINGSPEAK_HOST", "mqtt3.thingspeak.com")

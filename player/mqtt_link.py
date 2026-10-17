@@ -18,6 +18,9 @@ class MqttLink:
     def __init__(self, client_id="recordplayer-pi"):
         self.commands = queue.Queue()
         self.distance = None   # last distance from the Pico, in cm
+        self.lux = None
+        self.volume = None
+        self.rfid_uid = None
         self.connected = False
         self.last_status = None        # re-sent after a (re)connect
         self.last_now_playing = None
@@ -40,6 +43,9 @@ class MqttLink:
         self.connected = True
         client.subscribe(config.TOPIC_COMMAND)
         client.subscribe(config.TOPIC_DISTANCE)
+        client.subscribe(config.TOPIC_LUX)
+        client.subscribe(config.TOPIC_VOLUME)
+        client.subscribe(config.TOPIC_RFID)
         # Messages published before the connection was up were lost: send them again.
         if self.last_status:
             client.publish(config.TOPIC_STATUS, self.last_status, retain=True)
@@ -52,14 +58,32 @@ class MqttLink:
 
     def _on_message(self, client, userdata, msg):
         payload = msg.payload.decode(errors="ignore").strip()
+
         if msg.topic == config.TOPIC_COMMAND:
             print(f"[mqtt] command: {payload}")
             self.commands.put(payload)
+
         elif msg.topic == config.TOPIC_DISTANCE:
             try:
                 self.distance = float(payload)
             except ValueError:
                 pass
+
+        elif msg.topic == config.TOPIC_LUX:
+            try:
+                self.lux = float(payload)
+            except ValueError:
+                pass
+
+        elif msg.topic == config.TOPIC_VOLUME:
+            try:
+                self.volume = int(payload)
+            except ValueError:
+                pass
+
+        elif msg.topic == config.TOPIC_RFID:
+            self.rfid_uid = payload
+            print(f"[mqtt] RFID: {payload}")
 
     # ---------- used by the main loop ----------
     def next_command(self):
