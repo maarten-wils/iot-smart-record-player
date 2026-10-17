@@ -1,123 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" font-family="Helvetica, Arial, sans-serif">
-  <title>Smart Record Player - block schematic</title>
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M1 1L9 5L1 9z" fill="#444"/>
-    </marker>
-  </defs>
-  <rect width="1200" height="720" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" font-family="Arial, sans-serif">
+  <rect width="1200" height="720" fill="white"/>
+  <text x="600" y="40" text-anchor="middle" font-size="28" font-weight="bold">Smart Record Player - Current Architecture</text>
 
-  <!-- ===== Pico remote ===== -->
-  <rect x="40" y="40" width="340" height="250" rx="14" fill="#E1F5EE" stroke="#0F6E56" stroke-dasharray="6 4"/>
-  <text x="60" y="68" font-size="16" font-weight="bold" fill="#085041">Remote (WiFi, CircuitPython)</text>
+  <rect x="40" y="90" width="480" height="540" rx="16" fill="#eef7ff" stroke="#2474b5" stroke-width="2"/>
+  <text x="280" y="125" text-anchor="middle" font-size="22" font-weight="bold">3D model / Raspberry Pi Pico 2 W</text>
 
-  <rect x="60" y="88" width="140" height="58" rx="8" fill="#ffffff" stroke="#0F6E56"/>
-  <text x="130" y="112" font-size="15" font-weight="bold" fill="#085041" text-anchor="middle">HC-SR04</text>
-  <text x="130" y="132" font-size="12" fill="#0F6E56" text-anchor="middle">ultrasonic</text>
+  <text x="75" y="175" font-size="17" font-weight="bold">Inputs</text>
+  <text x="95" y="205" font-size="15">BH1750 - I2C - tonearm light</text>
+  <text x="95" y="235" font-size="15">HC-SR04 - digital - gesture/distance</text>
+  <text x="95" y="265" font-size="15">Pushbutton - digital - NEXT / POWER</text>
+  <text x="95" y="295" font-size="15">MCP3008 + potentiometer - SPI0 - volume</text>
+  <text x="95" y="325" font-size="15">RC522 RFID - shared SPI0 - record tag</text>
 
-  <rect x="220" y="88" width="140" height="58" rx="8" fill="#ffffff" stroke="#0F6E56"/>
-  <text x="290" y="112" font-size="15" font-weight="bold" fill="#085041" text-anchor="middle">Pushbutton</text>
-  <text x="290" y="132" font-size="12" fill="#0F6E56" text-anchor="middle">next / power</text>
+  <text x="75" y="375" font-size="17" font-weight="bold">Outputs</text>
+  <text x="95" y="405" font-size="15">SSD1306 OLED - SPI1 - local status</text>
+  <text x="95" y="435" font-size="15">PWM LED - status feedback</text>
+  <text x="95" y="465" font-size="15">28BYJ-48 + ULN2003 - platter motor</text>
+  <text x="95" y="495" font-size="15">Onboard LED - status feedback</text>
 
-  <rect x="60" y="200" width="300" height="70" rx="8" fill="#ffffff" stroke="#0F6E56"/>
-  <text x="210" y="228" font-size="15" font-weight="bold" fill="#085041" text-anchor="middle">Raspberry Pi Pico 2 W</text>
-  <text x="210" y="250" font-size="12" fill="#0F6E56" text-anchor="middle">code.py, onboard status LED</text>
+  <rect x="110" y="535" width="340" height="60" rx="10" fill="white" stroke="#2474b5"/>
+  <text x="280" y="562" text-anchor="middle" font-size="16" font-weight="bold">CircuitPython code.py</text>
+  <text x="280" y="584" text-anchor="middle" font-size="14">WiFi + MQTT publish / subscribe</text>
 
-  <line x1="130" y1="146" x2="130" y2="198" stroke="#444" stroke-width="1.5" marker-end="url(#a)" marker-start="url(#a)"/>
-  <text x="138" y="177" font-size="12" fill="#333">GPIO trig/echo</text>
-  <line x1="290" y1="146" x2="290" y2="198" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="298" y="177" font-size="12" fill="#333">GPIO in</text>
+  <rect x="680" y="140" width="460" height="410" rx="16" fill="#f7f3ff" stroke="#6b55b4" stroke-width="2"/>
+  <text x="910" y="175" text-anchor="middle" font-size="22" font-weight="bold">Raspberry Pi 5</text>
+  <text x="725" y="225" font-size="15">Mosquitto MQTT broker</text>
+  <text x="725" y="260" font-size="15">record_player.py + state machine</text>
+  <text x="725" y="295" font-size="15">Bluetooth audio via PipeWire</text>
+  <text x="725" y="330" font-size="15">ThingSpeak integration</text>
+  <text x="725" y="365" font-size="15">AI / fallback artist facts</text>
 
-  <!-- ===== Internet ===== -->
-  <rect x="800" y="40" width="360" height="250" rx="14" fill="#F1EFE8" stroke="#5F5E5A" stroke-dasharray="6 4"/>
-  <text x="820" y="68" font-size="16" font-weight="bold" fill="#444441">Internet</text>
+  <rect x="760" y="415" width="300" height="80" rx="10" fill="white" stroke="#6b55b4"/>
+  <text x="910" y="447" text-anchor="middle" font-size="16" font-weight="bold">Player states</text>
+  <text x="910" y="472" text-anchor="middle" font-size="14">STANDBY / REST / PLAY / PAUSED</text>
 
-  <rect x="840" y="82" width="300" height="60" rx="8" fill="#ffffff" stroke="#5F5E5A"/>
-  <text x="990" y="107" font-size="15" font-weight="bold" fill="#2C2C2A" text-anchor="middle">ThingSpeak</text>
-  <text x="990" y="127" font-size="12" fill="#5F5E5A" text-anchor="middle">online dashboard</text>
+  <line x1="520" y1="330" x2="680" y2="330" stroke="#333" stroke-width="3"/>
+  <polygon points="670,322 690,330 670,338" fill="#333"/>
+  <polygon points="530,322 510,330 530,338" fill="#333"/>
+  <text x="600" y="310" text-anchor="middle" font-size="16" font-weight="bold">MQTT over WiFi</text>
 
-  <rect x="840" y="182" width="300" height="60" rx="8" fill="#ffffff" stroke="#5F5E5A"/>
-  <text x="990" y="207" font-size="15" font-weight="bold" fill="#2C2C2A" text-anchor="middle">Claude API</text>
-  <text x="990" y="227" font-size="12" fill="#5F5E5A" text-anchor="middle">AI artist facts</text>
-
-  <!-- ===== Raspberry Pi ===== -->
-  <rect x="400" y="340" width="400" height="310" rx="14" fill="#EEEDFE" stroke="#534AB7" stroke-dasharray="6 4"/>
-  <text x="420" y="368" font-size="16" font-weight="bold" fill="#3C3489">Raspberry Pi 5</text>
-
-  <rect x="420" y="388" width="240" height="58" rx="8" fill="#ffffff" stroke="#534AB7"/>
-  <text x="540" y="412" font-size="15" font-weight="bold" fill="#3C3489" text-anchor="middle">Mosquitto</text>
-  <text x="540" y="432" font-size="12" fill="#534AB7" text-anchor="middle">MQTT broker</text>
-
-  <rect x="420" y="480" width="360" height="150" rx="8" fill="#ffffff" stroke="#534AB7"/>
-  <text x="600" y="508" font-size="15" font-weight="bold" fill="#3C3489" text-anchor="middle">record_player.py</text>
-  <text x="600" y="532" font-size="12" fill="#534AB7" text-anchor="middle">state machine: standby / rest / play / paused</text>
-  <text x="600" y="552" font-size="12" fill="#534AB7" text-anchor="middle">stepper thread</text>
-  <text x="600" y="572" font-size="12" fill="#534AB7" text-anchor="middle">AI and ThingSpeak in background</text>
-  <text x="600" y="592" font-size="12" fill="#534AB7" text-anchor="middle">records.json</text>
-
-  <line x1="540" y1="446" x2="540" y2="478" stroke="#444" stroke-width="1.5" marker-end="url(#a)" marker-start="url(#a)"/>
-  <text x="548" y="467" font-size="12" fill="#333">MQTT localhost</text>
-
-  <!-- Pico <-> broker -->
-  <path d="M382 235 L540 235 L540 386" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#a)" marker-start="url(#a)"/>
-  <text x="392" y="226" font-size="12" font-weight="bold" fill="#0F6E56">MQTT over WiFi</text>
-
-  <!-- Pi -> cloud -->
-  <path d="M700 478 L700 112 L838 112" fill="none" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="752" y="104" font-size="12" font-weight="bold" fill="#444441">MQTT</text>
-  <path d="M740 478 L740 212 L838 212" fill="none" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#a)" marker-start="url(#a)"/>
-  <text x="752" y="204" font-size="12" font-weight="bold" fill="#444441">HTTPS</text>
-
-  <!-- ===== Inputs (left) ===== -->
-  <rect x="40" y="360" width="300" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5"/>
-  <text x="190" y="384" font-size="15" font-weight="bold" fill="#0C447C" text-anchor="middle">BH1750 light sensor</text>
-  <text x="190" y="404" font-size="12" fill="#185FA5" text-anchor="middle">tonearm position</text>
-  <line x1="340" y1="388" x2="398" y2="388" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="352" y="380" font-size="12" font-weight="bold" fill="#333">I2C</text>
-
-  <rect x="40" y="450" width="300" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5"/>
-  <text x="190" y="474" font-size="15" font-weight="bold" fill="#0C447C" text-anchor="middle">MCP3008 ADC</text>
-  <text x="190" y="494" font-size="12" fill="#185FA5" text-anchor="middle">10-bit, 8 channels</text>
-  <line x1="340" y1="478" x2="398" y2="478" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="348" y="470" font-size="12" font-weight="bold" fill="#333">SPI0</text>
-
-  <rect x="40" y="560" width="300" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5"/>
-  <text x="190" y="584" font-size="15" font-weight="bold" fill="#0C447C" text-anchor="middle">Potentiometer 10k</text>
-  <text x="190" y="604" font-size="12" fill="#185FA5" text-anchor="middle">volume knob</text>
-  <line x1="190" y1="560" x2="190" y2="508" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="198" y="539" font-size="12" font-weight="bold" fill="#333">analog CH0</text>
-
-  <!-- ===== Outputs (right) ===== -->
-  <rect x="860" y="352" width="300" height="52" rx="8" fill="#FAECE7" stroke="#993C1D"/>
-  <text x="1010" y="374" font-size="15" font-weight="bold" fill="#712B13" text-anchor="middle">ULN2003 + 28BYJ-48</text>
-  <text x="1010" y="393" font-size="12" fill="#993C1D" text-anchor="middle">stepper motor: platter</text>
-  <line x1="800" y1="378" x2="858" y2="378" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="806" y="370" font-size="12" font-weight="bold" fill="#333">4x GPIO</text>
-
-  <rect x="860" y="432" width="300" height="52" rx="8" fill="#FAECE7" stroke="#993C1D"/>
-  <text x="1010" y="454" font-size="15" font-weight="bold" fill="#712B13" text-anchor="middle">Status LED</text>
-  <text x="1010" y="473" font-size="12" fill="#993C1D" text-anchor="middle">dim / bright / breathing</text>
-  <line x1="800" y1="458" x2="858" y2="458" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="812" y="450" font-size="12" font-weight="bold" fill="#333">PWM</text>
-
-  <rect x="860" y="512" width="300" height="52" rx="8" fill="#FAECE7" stroke="#993C1D"/>
-  <text x="1010" y="534" font-size="15" font-weight="bold" fill="#712B13" text-anchor="middle">OLED 128x64 SSD1306</text>
-  <text x="1010" y="553" font-size="12" fill="#993C1D" text-anchor="middle">local dashboard</text>
-  <line x1="800" y1="538" x2="858" y2="538" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="812" y="530" font-size="12" font-weight="bold" fill="#333">SPI1</text>
-
-  <rect x="860" y="592" width="300" height="52" rx="8" fill="#FAECE7" stroke="#993C1D"/>
-  <text x="1010" y="614" font-size="15" font-weight="bold" fill="#712B13" text-anchor="middle">Bluetooth speaker</text>
-  <text x="1010" y="633" font-size="12" fill="#993C1D" text-anchor="middle">audio via PipeWire</text>
-  <line x1="800" y1="618" x2="858" y2="618" stroke="#444" stroke-width="1.5" marker-end="url(#a)"/>
-  <text x="802" y="610" font-size="12" font-weight="bold" fill="#333">Bluetooth</text>
-
-  <!-- ===== Legend ===== -->
-  <rect x="40" y="672" width="14" height="14" rx="3" fill="#E6F1FB" stroke="#185FA5"/>
-  <text x="62" y="684" font-size="12" fill="#333">sensors / input</text>
-  <rect x="170" y="672" width="14" height="14" rx="3" fill="#FAECE7" stroke="#993C1D"/>
-  <text x="192" y="684" font-size="12" fill="#333">actuators / output</text>
-  <rect x="320" y="672" width="14" height="14" rx="3" fill="#E1F5EE" stroke="#0F6E56"/>
-  <text x="342" y="684" font-size="12" fill="#333">wireless remote</text>
-  <text x="470" y="684" font-size="12" fill="#333">The Pico is not wired to the Pi: they communicate over WiFi via MQTT.</text>
+  <rect x="760" y="590" width="300" height="70" rx="12" fill="#fff8e8" stroke="#b68a1f"/>
+  <text x="910" y="620" text-anchor="middle" font-size="16" font-weight="bold">Open before final demo</text>
+  <text x="910" y="643" text-anchor="middle" font-size="13">stepper runtime + 3D mounting + final calibration</text>
 </svg>

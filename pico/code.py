@@ -1,68 +1,206 @@
-# Smart Record Player - Pico 2 W remote
-# CircuitPython, based on the course example PicoW_MQTT_v0.py
+# Smart Record Player - Pico 2 W
+# CircuitPython, based on Robin's working Pico MQTT remote.
 #
-# Inputs:
-#   HC-SR04 ultrasonic sensor: hand < 10 cm for 1 s -> TOGGLE (pause / resume)
-#   pushbutton: short press -> NEXT (next record), long press (1.5 s) -> POWER (standby on/off)
-# Output:
-#   onboard LED: on = PLAY, blinking = PAUSED, off = REST / STANDBY / Pi offline
-# Communication:
-#   MQTT over WiFi with the broker (Mosquitto) on the Raspberry Pi
+# Existing functions kept:
+#   HC-SR04: hand gesture -> TOGGLE
+#   pushbutton: short press -> NEXT, long press -> POWER
+#   onboard LED: player status
+#   MQTT over WiFi
 #
-# Libraries needed in /lib on the Pico (CircuitPython bundle):
-#   adafruit_minimqtt, adafruit_connection_manager, adafruit_hcsr04, adafruit_ticks
+# Added hardware:
+#   BH1750 light sensor
+#   MCP3008 + potentiometer
+#   RC522 RFID reader
+#   PWM status LED
+#   SPI OLED
+#
+# SPI0 is shared by MCP3008 and RC522.
+# OLED uses SPI1.
+# The stepper is intentionally not part of this runtime yet.
+# Its standalone Pico test remains the verified reference while
+# the timing interaction with the full MQTT/sensor loop is investigated.
 
 import os
 import time
 import board
+import busio
 import digitalio
+import pwmio
+import displayio
 import wifi
 import socketpool
+
+from fourwire import FourWire
 import adafruit_hcsr04
+import adafruit_displayio_ssd1306
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
+import adafruit_mcp3xxx.mcp3008 as MCP
+from adafruit_mcp3xxx.analog_in import AnalogIn
+import mfrc522
+
 
 # ---------- Settings ----------
-# WiFi and broker come from settings.toml (see settings.toml.example)
+
 WIFI_SSID = os.getenv("CIRCUITPY_WIFI_SSID")
 WIFI_PASSWORD = os.getenv("CIRCUITPY_WIFI_PASSWORD")
-MQTT_HOST = os.getenv("MQTT_HOST")          # IP address of the Raspberry Pi
+MQTT_HOST = os.getenv("MQTT_HOST")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 MQTT_CLIENT_ID = "recordplayer-pico"
 
-TOPIC_COMMAND = "recordplayer/remote/command"    # Pico -> Pi
-TOPIC_DISTANCE = "recordplayer/remote/distance"  # Pico -> Pi / dashboard
-TOPIC_STATUS = "recordplayer/status"             # Pi -> Pico
+TOPIC_COMMAND = "recordplayer/remote/command"
+TOPIC_DISTANCE = "recordplayer/remote/distance"
+TOPIC_STATUS = "recordplayer/status"
+TOPIC_LUX = "recordplayer/lux"
+TOPIC_VOLUME = "recordplayer/volume"
+TOPIC_RFID = "recordplayer/rfid"
 
-TRIGGER_DISTANCE = 10    # cm: hand closer than this counts as a gesture
-RELEASE_DISTANCE = 15    # cm: hand must move further than this to re-arm
-HOLD_TIME = 1.0          # s: how long the hand must stay close
-LONG_PRESS = 1.5         # s: button held this long = POWER
-DEBOUNCE = 0.05          # s: ignore button bounces shorter than this
-PUBLISH_INTERVAL = 1.0   # s: distance publish period
+TRIGGER_DISTANCE = 10
+RELEASE_DISTANCE = 15
+HOLD_TIME = 1.0
+LONG_PRESS = 1.5
+DEBOUNCE = 0.05
 
-# ---------- Hardware ----------
-# HC-SR04: TRIG on GP2, ECHO on GP3 (through a voltage divider, ECHO is 5 V!)
-sonar = adafruit_hcsr04.HCSR04(trigger_pin=board.GP2, echo_pin=board.GP3, timeout=0.05)
+PUBLISH_INTERVAL = 1.0
+RFID_INTERVAL = 0.1
+RFID_RELEASE_TIME = 0.5
 
-# Pushbutton between GP15 and GND, internal pull-up: released = True, pressed = False
+BH1750_ADDRESS = 0x23
+
+LED_FREQUENCY = 5000
+LED_DIM = 10000
+LED_BRIGHT = 50000
+
+
+# ---------- HC-SR04 ----------
+
+sonar = adafruit_hcsr04.HCSR04(
+    trigger_pin=board.GP2,
+    echo_pin=board.GP3,
+    timeout=0.05
+)
+
+
+# ---------- Pushbutton ----------
+
 button = digitalio.DigitalInOut(board.GP15)
 button.direction = digitalio.Direction.INPUT
 button.pull = digitalio.Pull.UP
 
-# Onboard LED shows the player status
+
+# ---------- Onboard status LED ----------
+
 led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
 
+
+# ---------- PWM status LED ----------
+
+status_led = pwmio.PWMOut(
+    board.GP12,
+    frequency=LED_FREQUENCY,
+    duty_cycle=LED_DIM
+)
+
+
+# ---------- OLED on SPI1 ----------
+
+displayio.release_displays()
+
+oled_spi = busio.SPI(
+    board.GP10,
+    MOSI=board.GP11
+)
+
+oled_bus = FourWire(
+    oled_spi,
+    command=board.GP13,
+    chip_select=board.GP5,
+    reset=board.GP22,
+    baudrate=1000000
+)
+
+display = adafruit_displayio_ssd1306.SSD1306(
+    oled_bus,
+    width=128,
+    height=64
+)
+
+oled_group = displayio.Group()
+display.root_group = oled_group
+
+oled_bitmap = displayio.Bitmap(128, 64, 1)
+oled_palette = displayio.Palette(1)
+oled_palette[0] = 0xFFFFFF
+
+oled_tile = displayio.TileGrid(
+    oled_bitmap,
+    pixel_shader=oled_palette
+)
+
+oled_group.append(oled_tile)
+
+
 player_status = "OFFLINE"
+last_oled_state = None
+
+
+# ---------- BH1750 ----------
+
+i2c = busio.I2C(
+    board.GP1,
+    board.GP0
+)
+
+while not i2c.try_lock():
+    pass
+
+i2c.writeto(BH1750_ADDRESS, bytes([0x10]))
+i2c.unlock()
+
+time.sleep(0.2)
+
+
+def read_lux():
+    data = bytearray(2)
+
+    while not i2c.try_lock():
+        pass
+
+    i2c.readfrom_into(BH1750_ADDRESS, data)
+    i2c.unlock()
+
+    value = (data[0] << 8) | data[1]
+    return value / 1.2
+
+
+# ---------- Shared SPI0: MCP3008 + RC522 ----------
+
+spi = busio.SPI(
+    board.GP18,
+    MOSI=board.GP19,
+    MISO=board.GP16
+)
+
+mcp_cs = digitalio.DigitalInOut(board.GP17)
+mcp = MCP.MCP3008(spi, mcp_cs)
+volume_channel = AnalogIn(mcp, MCP.P0)
+
+rfid_cs = digitalio.DigitalInOut(board.GP20)
+rfid_rst = digitalio.DigitalInOut(board.GP21)
+rfid = mfrc522.MFRC522(spi, rfid_cs, rfid_rst)
+
 
 # ---------- WiFi ----------
+
 print("Connecting to WiFi", WIFI_SSID)
 wifi.radio.connect(WIFI_SSID, WIFI_PASSWORD)
 print("my IP addr:", wifi.radio.ipv4_address)
+
 pool = socketpool.SocketPool(wifi.radio)
 
 
 # ---------- MQTT callbacks ----------
+
 def connect(client, userdata, flags, rc):
     print("Connected to MQTT broker", MQTT_HOST)
     client.subscribe(TOPIC_STATUS)
@@ -73,38 +211,41 @@ def disconnect(client, userdata, rc):
 
 
 def message(client, topic, msg):
-    # The Pi publishes STANDBY / REST / PLAY / PAUSED (or OFFLINE)
     global player_status
+
     if topic != TOPIC_STATUS:
         return
+
     print("Status from Pi:", msg)
     player_status = msg
 
 
-CONNECT_TIMEOUT = 2     # s: setting up the connection over WiFi needs time
-LOOP_TIMEOUT = 0.05     # s: afterwards short timeouts keep sensor + button responsive
+CONNECT_TIMEOUT = 2
+LOOP_TIMEOUT = 0.05
 
 mqtt_client = MQTT.MQTT(
     broker=MQTT_HOST,
     port=MQTT_PORT,
     client_id=MQTT_CLIENT_ID,
     socket_pool=pool,
-    is_ssl=False,          # local broker, no TLS
+    is_ssl=False,
     keep_alive=60,
     socket_timeout=CONNECT_TIMEOUT,
 )
+
 mqtt_client.on_connect = connect
 mqtt_client.on_disconnect = disconnect
 mqtt_client.on_message = message
 
 
 def mqtt_connect(reconnect=False):
-    """Connect with a long timeout, then switch to a short one for the main loop."""
     mqtt_client._socket_timeout = CONNECT_TIMEOUT
+
     if reconnect:
         mqtt_client.reconnect()
     else:
         mqtt_client.connect()
+
     mqtt_client._socket_timeout = LOOP_TIMEOUT
     mqtt_client._sock.settimeout(LOOP_TIMEOUT)
 
@@ -114,13 +255,32 @@ mqtt_connect()
 
 
 # ---------- Helpers ----------
+
 def read_distance():
-    """Return distance in cm, or None if the sensor timed out."""
     try:
         return sonar.distance
     except RuntimeError:
-        # No echo received (nothing in range) - not an error for us
         return None
+
+
+def read_volume():
+    return round(volume_channel.value / 65535 * 100)
+
+
+def read_rfid():
+    status, tag_type = rfid.request(rfid.REQALL)
+
+    if status != rfid.OK:
+        return None
+
+    status, uid = rfid.anticoll()
+
+    if status != rfid.OK:
+        return None
+
+    return "{:02x}{:02x}{:02x}{:02x}".format(
+        uid[0], uid[1], uid[2], uid[3]
+    )
 
 
 def send(command):
@@ -128,31 +288,56 @@ def send(command):
     mqtt_client.publish(TOPIC_COMMAND, command)
 
 
-def update_led(now):
+def update_outputs(now):
+    global last_oled_state
+
+    # Robin's onboard LED behaviour.
     if player_status == "PLAY":
         led.value = True
     elif player_status == "PAUSED":
-        led.value = int(now * 2) % 2 == 0   # blink twice per second
+        led.value = int(now * 2) % 2 == 0
     else:
         led.value = False
 
+    # External PWM LED: bright only in PLAY, dim otherwise.
+    if player_status == "PLAY":
+        status_led.duty_cycle = LED_BRIGHT
+    else:
+        status_led.duty_cycle = LED_DIM
+
+    # This OLED is visually inverted with the current DisplayIO palette.
+    # PLAY therefore uses bitmap value 0, REST uses 1.
+    if player_status == "PLAY":
+        oled_state = 0
+    elif player_status == "PAUSED":
+        oled_state = 0 if int(now * 2) % 2 == 0 else 1
+    else:
+        oled_state = 1
+
+    if oled_state != last_oled_state:
+        oled_bitmap.fill(oled_state)
+        last_oled_state = oled_state
+
 
 # ---------- Main loop ----------
-close_since = None     # time when the hand came close
-armed = True           # False after a gesture until the hand is removed
-pressed_since = None   # time when the button went down
-long_sent = False      # POWER already sent for this press
+
+close_since = None
+armed = True
+pressed_since = None
+long_sent = False
 last_publish = 0
+last_rfid_check = 0
+last_rfid_uid = None
+rfid_missing_since = None
+
 
 while True:
     try:
-        # Handle incoming messages (status from the Pi)
         mqtt_client.loop(timeout=LOOP_TIMEOUT)
-
         now = time.monotonic()
 
-        # --- Gesture detection with hysteresis ---
         distance = read_distance()
+
         if distance is not None and distance < TRIGGER_DISTANCE:
             if close_since is None:
                 close_since = now
@@ -163,35 +348,70 @@ while True:
             close_since = None
             armed = True
 
-        # --- Button: short press = NEXT, long press = POWER ---
-        if not button.value:                       # pressed
+        if not button.value:
             if pressed_since is None:
                 pressed_since = now
             elif not long_sent and now - pressed_since >= LONG_PRESS:
                 send("POWER")
                 long_sent = True
-        else:                                      # released
+        else:
             if pressed_since is not None:
                 held = now - pressed_since
                 if not long_sent and held >= DEBOUNCE:
                     send("NEXT")
+
             pressed_since = None
             long_sent = False
 
-        # --- Periodic distance publish for the dashboard ---
         if now - last_publish >= PUBLISH_INTERVAL:
             if distance is not None:
                 mqtt_client.publish(TOPIC_DISTANCE, "%.1f" % distance)
+
+            lux = read_lux()
+            volume = read_volume()
+
+            mqtt_client.publish(TOPIC_LUX, "%.1f" % lux)
+            mqtt_client.publish(TOPIC_VOLUME, str(volume))
+
+            print(
+                "Distance:", distance,
+                "| Lux:", "%.1f" % lux,
+                "| Volume:", volume
+            )
+
             last_publish = now
 
-        update_led(now)
+        if now - last_rfid_check >= RFID_INTERVAL:
+            uid = read_rfid()
+
+            if uid is not None:
+                rfid_missing_since = None
+
+                if uid != last_rfid_uid:
+                    print("RFID:", uid)
+                    mqtt_client.publish(TOPIC_RFID, uid)
+
+                last_rfid_uid = uid
+
+            elif last_rfid_uid is not None:
+                if rfid_missing_since is None:
+                    rfid_missing_since = now
+                elif now - rfid_missing_since >= RFID_RELEASE_TIME:
+                    last_rfid_uid = None
+                    rfid_missing_since = None
+
+            last_rfid_check = now
+
+        update_outputs(now)
         time.sleep(0.02)
 
     except (OSError, MQTT.MMQTTException) as e:
-        # WiFi or broker hiccup: wait and reconnect
         print("MQTT error:", e, "- reconnecting")
         led.value = False
+        status_led.duty_cycle = LED_DIM
+        oled_bitmap.fill(1)
         time.sleep(2)
+
         try:
             mqtt_connect(reconnect=True)
         except Exception as e2:

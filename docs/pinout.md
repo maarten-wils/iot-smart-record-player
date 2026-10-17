@@ -1,87 +1,70 @@
-# Pinout
+# Current pinout
 
-All connections in one place. Physical pin numbers: Raspberry Pi 40-pin header,
-pin 1 = 3.3V next to the SD-card side; Pico pin 1 = top left with the USB port up.
+Final wiring for the Pico-based prototype. Pico physical pin 1 is top-left with USB at the top.
+
+## Pico 2 W
+
+| Physical pin | GPIO | Connected to |
+| ---: | --- | --- |
+| 1 | GP0 | BH1750 SDA |
+| 2 | GP1 | BH1750 SCL |
+| 4 | GP2 | HC-SR04 TRIG |
+| 5 | GP3 | HC-SR04 ECHO through 1k/2k divider |
+| 9 | GP6 | ULN2003 IN1 |
+| 10 | GP7 | ULN2003 IN2 |
+| 11 | GP8 | ULN2003 IN3 |
+| 12 | GP9 | ULN2003 IN4 |
+| 14 | GP10 | OLED SCL / SPI1 clock |
+| 15 | GP11 | OLED SDA / SPI1 MOSI |
+| 16 | GP12 | PWM status LED |
+| 17 | GP13 | OLED DC |
+| 20 | GP15 | pushbutton, internal pull-up |
+| 21 | GP16 | SPI0 MISO: MCP3008 DOUT + RC522 MISO |
+| 22 | GP17 | MCP3008 CS |
+| 24 | GP18 | SPI0 SCK: MCP3008 CLK + RC522 SCK |
+| 25 | GP19 | SPI0 MOSI: MCP3008 DIN + RC522 MOSI |
+| 26 | GP20 | RC522 SDA/SS (SPI CS) |
+| 27 | GP21 | RC522 RST |
+| 29 | GP22 | OLED RESET |
+| 40 | VBUS 5V | HC-SR04 VCC + ULN2003 VCC in prototype |
+
+OLED has no physical CS pin. GP5 is used only as the software CS required by `FourWire`; no wire is connected to GP5.
+
+## Power
+
+- 3.3V: BH1750, MCP3008, potentiometer, RC522, OLED
+- 5V: HC-SR04 and ULN2003/stepper
+- all modules share common GND
+- final one-cable power distribution still needs to be validated after mounting in the 3D model
+
+## MCP3008 + 10k potentiometer
+
+MCP3008 DIP-16, notch up:
+
+| MCP3008 pin | Function | Connection |
+| ---: | --- | --- |
+| 1 | CH0 | potentiometer wiper |
+| 16 | VDD | 3.3V |
+| 15 | VREF | 3.3V |
+| 14 | AGND | GND |
+| 13 | CLK | GP18 |
+| 12 | DOUT | GP16 |
+| 11 | DIN | GP19 |
+| 10 | CS | GP17 |
+| 9 | DGND | GND |
+
+Potentiometer: one outer leg -> 3.3V, middle -> CH0, other outer leg -> GND.
+
+## HC-SR04 divider
+
+```text
+ECHO -- 1k --+-- GP3
+             |
+             2k
+             |
+            GND
+```
 
 ## Raspberry Pi 5
 
-| Pin | GPIO | Connected to | Part |
-| ---: | --- | --- | --- |
-| 1 | 3.3V | VCC | OLED |
-| 2 | 5V | VCC | ULN2003 (stepper) |
-| 3 | GPIO2 / SDA1 | SDA | BH1750 |
-| 5 | GPIO3 / SCL1 | SCL | BH1750 |
-| 6 | GND | GND | ULN2003 |
-| 7 | GPIO4 | RES | OLED |
-| 11 | GPIO17 | IN1 | ULN2003 |
-| 13 | GPIO27 | IN3 | ULN2003 |
-| 14 | GND | GND | BH1750 |
-| 15 | GPIO22 | IN4 | ULN2003 |
-| 16 | GPIO23 | pushbutton (Maarten's `test_button.py`, optional) | button |
-| 17 | 3.3V | 3.3 V rail: BH1750 VCC, MCP3008 VDD + VREF, potentiometer | rail |
-| 19 | GPIO10 / SPI0 MOSI | DIN (pin 11) | MCP3008 |
-| 21 | GPIO9 / SPI0 MISO | DOUT (pin 12) | MCP3008 |
-| 22 | GPIO25 | CS (pin 10) | MCP3008 |
-| 23 | GPIO11 / SPI0 SCLK | CLK (pin 13) | MCP3008 |
-| 25 | GND | GND rail: MCP3008 AGND + DGND, potentiometer | rail |
-| 31 | GPIO6 | DC | OLED |
-| 32 | GPIO12 / PWM0 | LED + (via 220 Ω) | status LED |
-| 34 | GND | LED − | status LED |
-| 37 | GPIO26 | IN2 | ULN2003 |
-| 38 | GPIO20 / SPI1 MOSI | SDA | OLED |
-| 39 | GND | GND | OLED |
-| 40 | GPIO21 / SPI1 SCLK | SCL | OLED |
-
-Reserved, keep free: GPIO5 (software CS of the OLED), GPIO18 (SPI1 CE0), GPIO19 (SPI1 MISO),
-GPIO7 and GPIO8 (SPI0 CE1/CE0, claimed by the kernel when SPI0 is on).
-
-`/boot/firmware/config.txt`:
-
-```
-dtparam=i2c_arm=on
-dtparam=spi=on
-dtoverlay=spi1-1cs
-```
-
-## MCP3008 (DIP-16, notch at the top)
-
-```
-          notch
-   CH0  1 ┌─U─┐ 16  VDD   -> 3.3 V
-   CH1  2 │   │ 15  VREF  -> 3.3 V
-   CH2  3 │   │ 14  AGND  -> GND
-   CH3  4 │   │ 13  CLK   -> Pi pin 23 (GPIO11)
-   CH4  5 │   │ 12  DOUT  -> Pi pin 21 (GPIO9)
-   CH5  6 │   │ 11  DIN   -> Pi pin 19 (GPIO10)
-   CH6  7 │   │ 10  CS    -> Pi pin 22 (GPIO25)
-   CH7  8 └───┘  9  DGND  -> GND
-```
-
-Potentiometer (10k): outer leg -> 3.3 V, middle leg (wiper) -> CH0 (pin 1), other outer leg -> GND.
-
-## Raspberry Pi Pico 2 W (remote)
-
-| Pin | GPIO | Connected to | Part |
-| ---: | --- | --- | --- |
-| 4 | GP2 | TRIG | HC-SR04 |
-| 5 | GP3 | ECHO via voltage divider | HC-SR04 |
-| 18 | GND | pushbutton leg 2 | button |
-| 20 | GP15 | pushbutton leg 1 (internal pull-up) | button |
-| 38 | GND | GND + bottom of voltage divider | HC-SR04 |
-| 40 | VBUS (5 V) | VCC | HC-SR04 |
-| – | onboard LED | status: on = PLAY, blinking = PAUSED | LED |
-
-Voltage divider (ECHO is 5 V, the Pico accepts 3.3 V):
-
-```
-ECHO ──[1 kΩ]──┬── GP3 (pin 5)
-               │
-            [1 kΩ]
-               │
-            [1 kΩ]
-               │
-              GND (pin 38)
-```
-
-The Pico is **not wired to the Raspberry Pi**: they only talk over WiFi (MQTT).
-Do not connect the Pico to the breadboard power rails of the Pi.
+No project sensors are currently connected directly to the Pi 5. The Pi runs Mosquitto, player logic, Bluetooth audio, ThingSpeak and AI/fallback facts. Pico and Pi communicate over WiFi/MQTT.

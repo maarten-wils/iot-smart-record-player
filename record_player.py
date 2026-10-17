@@ -5,11 +5,10 @@ Run from the repo root, without sudo:
     python3 record_player.py
 
 IoT Information-Value Loop:
-    create       BH1750 (tonearm), potentiometer via MCP3008 (volume),
-                 HC-SR04 + button on the Pico remote (gestures, next, power)
+    create       Pico sensors: BH1750, MCP3008, HC-SR04, button, RFID
     communicate  MQTT: Pico <-> local broker <-> this program -> ThingSpeak
     analyze      state machine (player/state.py), AI artist facts
-    act          stepper platter, PWM LED, audio, OLED, online dashboard
+    act          audio on Pi; Pico receives status for LED/OLED outputs
 
 All settings are in player/config.py and .env.
 """
@@ -19,40 +18,22 @@ import time
 from player import config, state
 from player.ai_facts import FactProvider
 from player.audio import AudioPlayer
-from player.display import Display
-from player.light_sensor import LightSensor
 from player.mqtt_link import MqttLink
 from player.records import load_records
-from player.status_led import StatusLed
-from player.stepper import Stepper
 from player.thingspeak import ThingSpeak
 
-LUX_INTERVAL = 0.25      # s between light sensor readings
-VOLUME_INTERVAL = 0.1    # s between volume knob readings
-PUBLISH_INTERVAL = 2.0   # s between lux/volume updates on the local broker
-LOOP_DELAY = 0.02        # s main loop period
+LOOP_DELAY = 0.02
 
 
 def main():
     records = load_records()
     player_state = state.PlayerState(len(records))
 
-    # ---------- hardware ----------
-    stepper = Stepper(config.STEPPER_PINS, config.STEPPER_DELAY, config.STEPPER_REVERSE)
-    light_sensor = LightSensor(config.I2C_SCL, config.I2C_SDA, config.BH1750_ADDRESS)
-    led = StatusLed(config.LED_PIN, config.LED_FREQUENCY, config.LED_DIM, config.LED_BRIGHT)
-    display = Display(config.OLED_SPI, config.OLED_RESET, config.OLED_DC, config.OLED_CS)
-
-    volume_knob = None
-    if config.USE_VOLUME_KNOB:
-        from player.volume_knob import VolumeKnob   # only needs the library when used
-        volume_knob = VolumeKnob(config.ADC_SPI, config.ADC_CS, config.ADC_CHANNEL, config.VOLUME_DEADBAND)
-        volume = volume_knob.percent
-    else:
-        volume = config.DEFAULT_VOLUME
-
+    # Hardware sensors and local display outputs have moved to the Pico.
+    # The Pi now receives sensor values through MQTT and keeps audio,
+    # state handling, ThingSpeak and AI.
     audio = AudioPlayer(config.PAUSE_MODE)
-    audio.set_volume(volume)
+    audio.set_volume(config.DEFAULT_VOLUME)
 
     # ---------- network ----------
     mqtt_link = MqttLink()
@@ -77,41 +58,37 @@ def main():
 
     # ---------- main loop ----------
     last_status = None
-    last_lux_read = 0
-    last_volume_read = 0
-    last_publish = 0
-    first_reading = True
+    last_volume = None
+    first_lux = True
     lux = 0.0
-    pages_cache = {}
+    volume = config.DEFAULT_VOLUME
 
     print("Smart Record Player running. Ctrl+C to stop.")
 
     try:
         while True:
-            now = time.monotonic()
             record_changed = False
 
-            # 1. Tonearm position (BH1750 via I2C)
-            if now - last_lux_read >= LUX_INTERVAL:
-                reading = light_sensor.read_lux()
-                if reading is not None:
-                    lux = reading
-                    if first_reading:
-                        first_reading = False   # first value after startup is unreliable
-                    else:
-                        player_state.set_tonearm(lux >= config.LIGHT_THRESHOLD)
-                last_lux_read = now
+            # 1. Sensor values from the Pico over MQTT.
+            if mqtt_link.lux is not None:
+                lux = mqtt_link.lux
 
-            # 2. Volume knob (potentiometer via MCP3008 / SPI0)
-            if volume_knob and now - last_volume_read >= VOLUME_INTERVAL:
-                volume, changed = volume_knob.read()
-                if changed:
+                if first_lux:
+                    first_lux = False
+                else:
+                    player_state.set_tonearm(
+                        lux >= config.LIGHT_THRESHOLD
+                    )
+
+            if mqtt_link.volume is not None:
+                volume = mqtt_link.volume
+
+                if volume != last_volume:
                     print(f"volume -> {volume}%")
                     audio.set_volume(volume)
-                    mqtt_link.publish_value(config.TOPIC_VOLUME, volume)
-                last_volume_read = now
+                    last_volume = volume
 
-            # 3. Commands from the Pico remote (MQTT)
+            # 2. Commands from the Pico remote.
             command = mqtt_link.next_command()
             while command:
                 if player_state.handle_command(command):
@@ -119,27 +96,31 @@ def main():
                     select_record(player_state.record_index)
                 command = mqtt_link.next_command()
 
-            # 4. React to a new state (or a new record while playing)
+            # 3. React to a new state (or a new record while playing).
             status = player_state.status
             record = records[player_state.record_index]
 
             if status != last_status or (record_changed and status == state.PLAY):
-                print(f"{lux:.1f} lux -> {status} ({record['artist']} - {record['title']})")
+                print(
+                    f"{lux:.1f} lux -> {status} "
+                    f"({record['artist']} - {record['title']})"
+                )
 
                 if status == state.PLAY:
                     if last_status == state.PAUSED and not record_changed:
                         audio.resume()
                     else:
                         audio.play(record["path"])
-                        thingspeak.log_now_playing(record["artist"], record["title"])
-                    stepper.start()
+                        thingspeak.log_now_playing(
+                            record["artist"],
+                            record["title"]
+                        )
                 elif status == state.PAUSED:
                     audio.pause()
-                    stepper.stop()
                 else:   # REST or STANDBY
                     audio.stop()
-                    stepper.stop()
 
+                # Pico uses this retained status for its outputs.
                 mqtt_link.publish_status(status)
                 last_status = status
 
@@ -147,28 +128,17 @@ def main():
             if status == state.PLAY and audio.finished():
                 audio.play(record["path"])
 
-            # 5. A new AI fact arrived: share it
+            # 4. A new AI fact arrived: share it.
             while new_facts:
                 index = new_facts.pop(0)
+
                 if index == player_state.record_index:
-                    mqtt_link.publish_now_playing(records[index], facts[index])
+                    mqtt_link.publish_now_playing(
+                        records[index],
+                        facts[index]
+                    )
 
-            # 6. Local dashboard: PWM LED + OLED
-            led.update(status)
-
-            fact = facts.get(player_state.record_index, "")
-            if fact not in pages_cache:
-                pages_cache[fact] = display.fact_pages(fact)
-            pages = pages_cache[fact]
-            page = pages[int(now / config.FACT_PAGE_TIME) % len(pages)]
-            display.show(status, volume, record["artist"], record["title"], page)
-
-            # 7. Online: local broker values + ThingSpeak
-            if now - last_publish >= PUBLISH_INTERVAL:
-                mqtt_link.publish_value(config.TOPIC_LUX, f"{lux:.1f}")
-                mqtt_link.publish_value(config.TOPIC_VOLUME, volume)
-                last_publish = now
-
+            # 5. Online dashboard.
             thingspeak.update(
                 status=status,
                 lux=lux,
@@ -184,15 +154,15 @@ def main():
         print("\nStopped by user.")
 
     finally:
-        # Switch everything off, also after an error.
-        for close in (audio.stop, stepper.close, led.close, display.close,
-                      light_sensor.close, mqtt_link.close, thingspeak.close):
+        for close in (
+            audio.stop,
+            mqtt_link.close,
+            thingspeak.close,
+        ):
             try:
                 close()
             except Exception as error:
                 print(f"cleanup: {error}")
-        if volume_knob:
-            volume_knob.close()
 
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
+import time
 import board
 import pwmio
-import time
 
-# Hardware PWM LED on GPIO12.
+# Hardware PWM LED on Pico GP12.
 led_pwm = pwmio.PWMOut(
-    board.D12,
+    board.GP12,
     frequency=5000,
     duty_cycle=0
 )

@@ -2,23 +2,21 @@ import time
 import board
 import digitalio
 
-# GPIO pins connected to ULN2003 IN1-IN4.
+# Pico GPIO pins connected to ULN2003 IN1-IN4.
 pins = [
-    board.D17,
-    board.D26,
-    board.D27,
-    board.D22
+    board.GP6,
+    board.GP7,
+    board.GP8,
+    board.GP9
 ]
 
 outputs = []
 
-# Configure the four GPIO pins as outputs.
 for pin in pins:
     output = digitalio.DigitalInOut(pin)
     output.direction = digitalio.Direction.OUTPUT
     outputs.append(output)
 
-# Wave drive: activate one coil at a time.
 steps = [
     (True, False, False, False),
     (False, True, False, False),
@@ -27,9 +25,9 @@ steps = [
 ]
 
 try:
-    print("Stepper test starting")
+    print("Pico stepper test starting")
 
-    for i in range(512):
+    for i in range(2048):
         step = steps[i % 4]
 
         for output, value in zip(outputs, step):
@@ -38,9 +36,8 @@ try:
         time.sleep(0.01)
 
 finally:
-    # Switch off all motor coils.
     for output in outputs:
         output.value = False
         output.deinit()
 
-    print("Stepper test finished")
+    print("Pico stepper test finished")

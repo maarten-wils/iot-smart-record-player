@@ -2,53 +2,40 @@
 
 IoT Essentials 2026 · Team: Maarten Wils, Robin Wils
 
-## What will we make?
+## Concept
 
-A small smart record player. Placing the (LEGO) tonearm on the record starts the
-platter, the music and the status display; lifting it stops everything. A separate
-wireless remote pauses the music with a hand gesture, selects the next record and
-switches the player to standby. The player status is visible on an OLED, on the remote
-and on an online dashboard. For every record an AI model shows a short fun fact about the artist.
+A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico is mounted with the physical model and reads the sensors and controls the local outputs. The Pi 5 runs the player logic, Bluetooth audio, MQTT broker, ThingSpeak and AI/fallback facts.
 
-## Added value
+## Information-Value Loop
 
-The project turns a nostalgic, purely mechanical object into a connected device:
-contact-free control, remote monitoring of what is playing, and extra context about
-the music, while keeping the familiar "tonearm on the record" interaction.
-
-## IoT Information-Value Loop
-
-| Stage | In our project |
+| Stage | Project |
 | --- | --- |
-| Create | BH1750 light sensor (tonearm position), potentiometer via MCP3008 (volume), HC-SR04 and pushbutton on the Pico remote |
-| Communicate | MQTT over WiFi between the Pico and the Mosquitto broker on the Pi; MQTT to ThingSpeak; HTTPS to the AI |
-| Aggregate | the Pi combines tonearm, remote commands and volume into one player state |
-| Analyze | state machine (standby / rest / play / paused); AI generates an artist fact |
-| Act | stepper motor platter, PWM LED, audio, OLED, LED on the remote, ThingSpeak dashboard |
+| Create | BH1750, HC-SR04, pushbutton, MCP3008 + potentiometer, RFID |
+| Communicate | Pico -> MQTT over WiFi -> Mosquitto on Pi 5 |
+| Analyze | player state on Pi: STANDBY / REST / PLAY / PAUSED |
+| Act | Bluetooth audio, PWM LED, OLED and stepper platter |
+| Dashboard / extra | ThingSpeak + AI/fallback artist facts |
 
-## How we meet the requirements
+## Rubric mapping
 
-| Requirement | Solution |
+| Requirement | Implementation |
 | --- | --- |
-| Digital input (incl. ultrasonic) | HC-SR04 gesture sensor and pushbutton on the Pico |
-| I2C sensor | BH1750 light sensor detects the tonearm |
-| SPI (analog input via ADC) | 10k potentiometer via MCP3008 on SPI0 as volume knob |
-| Raspberry Pi | Pi 5 runs the player, the MQTT broker and the dashboards |
-| Raspberry Pi Pico | Pico 2 W as wireless remote (CircuitPython) |
-| MQTT | Pico <-> Mosquitto broker on the Pi; Pi -> ThingSpeak |
-| Online dashboard | ThingSpeak channel: play state, light, volume, distance, now playing |
-| Local dashboard (OLED) | SSD1306 OLED via SPI1: status, volume, artist, title, AI fact |
-| AI | Claude API generates a fun fact about the artist of each record |
-| Digital output incl. motor | 28BYJ-48 stepper motor via ULN2003 turns the platter |
-| PWM | status LED: dim, bright or "breathing" depending on the state |
+| Digital input + ultrasonic | pushbutton + HC-SR04 |
+| I2C | BH1750 tonearm sensor |
+| SPI analog input | MCP3008 + volume potentiometer |
+| OLED | SSD1306 on SPI1 |
+| Raspberry Pi | Pi 5 player, broker, audio, cloud logic |
+| Raspberry Pi Pico | Pico 2 W hardware controller |
+| MQTT via Pico | sensor data and commands published by Pico |
+| Digital output / motor | 28BYJ-48 + ULN2003 |
+| PWM | status LED |
+| Online dashboard | ThingSpeak |
+| AI | artist facts with fallback data |
 
-## Team and responsibilities
+## Current status
 
-Both team members work on all aspects of the project. Specific responsibilities:
+Most Pico hardware and the MQTT/audio flow are verified. The remaining core work is physical integration in the 3D model, final lux calibration, stepper runtime integration, final RFID record selection and final ThingSpeak/full-system verification.
 
-| Role | Responsible |
-| --- | --- |
-| Team leader (contact with coaches, upload on Canvas) | [to be agreed] |
-| Documentation (report and video) | [to be agreed] |
-| Hardware (physical setup) | Maarten: record player prototype and LEGO build |
-| Software (program structure and inline comments) | Robin: Pico remote, MQTT, ADC, ThingSpeak, AI, main application |
+## Team contribution
+
+Both team members work on all project aspects. Maarten leads the physical prototype/integration and verification. Robin's existing Pico/Pi software contribution remains preserved; integration changes are only made where required to connect the final architecture.
