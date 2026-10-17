@@ -27,8 +27,6 @@ A small record player in which the physical model contains the sensors and outpu
 - ThingSpeak integration
 - AI/fallback facts
 
-This matches the project requirement for Raspberry Pi + Pico, digital I/O, ultrasonic, I2C, SPI analog input, OLED, MQTT, dashboard, motor and PWM. The assignment explicitly requires MQTT via Pico and SPI analog input + OLED. fileciteturn76file0L27-L42
-
 ## Verified this session
 
 - Pico WiFi + MQTT
@@ -98,6 +96,6 @@ wpctl status
 
 ## Code policy
 
-Code is kept basic and course-oriented: small steps, standalone hardware tests first, short English comments and no unnecessary abstraction. This follows the project working agreement. fileciteturn76file5L724-L743
+Code is kept basic and course-oriented: small steps, standalone hardware tests first, short English comments and no unnecessary abstraction.
 
 Robin's existing Pi-side modules are kept unchanged unless integration requires otherwise. Weekend integration changes are isolated on `weekend-pico-integration` until final merge.
