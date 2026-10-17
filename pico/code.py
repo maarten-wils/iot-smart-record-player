@@ -12,8 +12,10 @@
 #   MCP3008 + potentiometer
 #   RC522 RFID reader
 #   PWM status LED
+#   SPI OLED
 #
 # SPI0 is shared by MCP3008 and RC522.
+# OLED uses SPI1.
 # The stepper is intentionally not part of this runtime yet.
 # Its standalone Pico test remains the verified reference while
 # the timing interaction with the full MQTT/sensor loop is investigated.
@@ -24,10 +26,13 @@ import board
 import busio
 import digitalio
 import pwmio
+import displayio
 import wifi
 import socketpool
 
+from fourwire import FourWire
 import adafruit_hcsr04
+import adafruit_displayio_ssd1306
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
 import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
@@ -96,7 +101,47 @@ status_led = pwmio.PWMOut(
     duty_cycle=LED_DIM
 )
 
+
+# ---------- OLED on SPI1 ----------
+
+displayio.release_displays()
+
+oled_spi = busio.SPI(
+    board.GP10,
+    MOSI=board.GP11
+)
+
+oled_bus = FourWire(
+    oled_spi,
+    command=board.GP13,
+    chip_select=board.GP5,
+    reset=board.GP22,
+    baudrate=1000000
+)
+
+display = adafruit_displayio_ssd1306.SSD1306(
+    oled_bus,
+    width=128,
+    height=64
+)
+
+oled_group = displayio.Group()
+display.root_group = oled_group
+
+oled_bitmap = displayio.Bitmap(128, 64, 1)
+oled_palette = displayio.Palette(1)
+oled_palette[0] = 0xFFFFFF
+
+oled_tile = displayio.TileGrid(
+    oled_bitmap,
+    pixel_shader=oled_palette
+)
+
+oled_group.append(oled_tile)
+
+
 player_status = "OFFLINE"
+last_oled_state = None
 
 
 # ---------- BH1750 ----------
@@ -254,7 +299,9 @@ def send(command):
     mqtt_client.publish(TOPIC_COMMAND, command)
 
 
-def update_leds(now):
+def update_outputs(now):
+    global last_oled_state
+
     # Keep Robin's onboard status LED behaviour.
     if player_status == "PLAY":
         led.value = True
@@ -268,6 +315,19 @@ def update_leds(now):
         status_led.duty_cycle = LED_BRIGHT
     else:
         status_led.duty_cycle = LED_DIM
+
+    # Simple OLED status test without extra text libraries.
+    # PLAY = white screen, PAUSED = blinking screen, other states = black.
+    if player_status == "PLAY":
+        oled_state = 1
+    elif player_status == "PAUSED":
+        oled_state = 1 if int(now * 2) % 2 == 0 else 0
+    else:
+        oled_state = 0
+
+    if oled_state != last_oled_state:
+        oled_bitmap.fill(oled_state)
+        last_oled_state = oled_state
 
 
 # ---------- Main loop ----------
@@ -366,13 +426,14 @@ while True:
 
             last_rfid_check = now
 
-        update_leds(now)
+        update_outputs(now)
         time.sleep(0.02)
 
     except (OSError, MQTT.MMQTTException) as e:
         print("MQTT error:", e, "- reconnecting")
         led.value = False
         status_led.duty_cycle = LED_DIM
+        oled_bitmap.fill(0)
         time.sleep(2)
 
         try:
