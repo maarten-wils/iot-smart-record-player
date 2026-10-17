@@ -98,4 +98,6 @@ wpctl status
 
 Code is kept basic and course-oriented: small steps, standalone hardware tests first, short English comments and no unnecessary abstraction.
 
-Robin's existing Pi-side modules are kept unchanged unless integration requires otherwise. Weekend integration changes are isolated on `weekend-pico-integration` until final merge.
+Known exception: `pico/lib/mfrc522.py` is the explicitly approved CircuitPython RFID driver needed for the RC522.
+
+Robin's existing contribution is preserved. Integration changes were limited to what was needed to connect the Pico-based hardware architecture to the existing Pi-side application.
