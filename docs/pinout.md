@@ -9,7 +9,7 @@ Final wiring for the Pico-based prototype. Pico physical pin 1 is top-left with 
 | 1 | GP0 | BH1750 SDA |
 | 2 | GP1 | BH1750 SCL |
 | 4 | GP2 | HC-SR04 TRIG |
-| 5 | GP3 | HC-SR04 ECHO through 1k/2k divider |
+| 5 | GP3 | HC-SR04 ECHO |
 | 9 | GP6 | ULN2003 IN1 |
 | 10 | GP7 | ULN2003 IN2 |
 | 11 | GP8 | ULN2003 IN3 |
@@ -26,16 +26,16 @@ Final wiring for the Pico-based prototype. Pico physical pin 1 is top-left with 
 | 26 | GP20 | RC522 SDA/SS (SPI CS) |
 | 27 | GP21 | RC522 RST |
 | 29 | GP22 | OLED RESET |
-| 40 | VBUS 5V | HC-SR04 VCC + ULN2003 VCC in prototype |
+| 40 | VBUS 5V | ULN2003 VCC in prototype |
 
 OLED has no physical CS pin. GP5 is used only as the software CS required by `FourWire`; no wire is connected to GP5.
 
 ## Power
 
-- 3.3V: BH1750, MCP3008, potentiometer, RC522, OLED
-- 5V: HC-SR04 and ULN2003/stepper
+- 3.3V: BH1750, HC-SR04, MCP3008, potentiometer, RC522, OLED
+- 5V: ULN2003/stepper
 - all modules share common GND
-- final one-cable power distribution still needs to be validated after mounting in the 3D model
+- final one-cable power distribution still needs to be validated after mounting in the prototype
 
 ## MCP3008 + 10k potentiometer
 
@@ -55,15 +55,13 @@ MCP3008 DIP-16, notch up:
 
 Potentiometer: one outer leg -> 3.3V, middle -> CH0, other outer leg -> GND.
 
-## HC-SR04 divider
+## HC-SR04
 
-```text
-ECHO -- 1k --+-- GP3
-             |
-             2k
-             |
-            GND
-```
+- VCC -> 3.3V
+- GND -> common GND
+- TRIG -> GP2
+- ECHO -> GP3 directly
+- no resistor divider is used in this prototype setup
 
 ## Raspberry Pi 5
 
