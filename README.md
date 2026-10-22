@@ -27,7 +27,9 @@ A small record player in which the physical model contains the sensors and outpu
 - ThingSpeak integration
 - AI/fallback facts
 
-## Verified this session
+## Verified hardware status
+
+All planned Pico hardware is now mounted on one large breadboard and individually verified:
 
 - Pico WiFi + MQTT
 - HC-SR04 distance + TOGGLE command
@@ -38,17 +40,18 @@ A small record player in which the physical model contains the sensors and outpu
 - MCP3008 and RC522 sharing SPI0
 - PWM LED reacts to player status
 - OLED reacts to PLAY / REST / PAUSED
-- Pi receives Pico sensor data and controls Bluetooth audio
-- REST / PLAY reacts to lux values
+- 28BYJ-48 + ULN2003 stepper standalone
+
+The full `pico/code.py` runtime was also verified with WiFi/MQTT, HC-SR04, pushbutton, BH1750, MCP3008, RC522, OLED and PWM LED active together. The stepper remains intentionally outside the full runtime while its MQTT timing issue is investigated.
 
 Open before final demo:
 
 - integrate stepper smoothly into the Pico runtime
-- mount hardware in the 3D model
+- build the working large-breadboard prototype into the LEGO housing
 - recalibrate REST / PLAY lux thresholds after mounting
 - reconnect/test ThingSpeak credentials
 - final RFID -> record selection flow
-- final full-system repeatability test
+- final full-system repeatability test after physical mounting
 
 ## Run
 
