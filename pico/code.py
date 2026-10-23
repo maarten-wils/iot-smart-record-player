@@ -13,12 +13,13 @@
 #   RC522 RFID reader
 #   PWM status LED
 #   SPI OLED
+#   28BYJ-48 stepper via ULN2003
 #
 # SPI0 is shared by MCP3008 and RC522.
 # OLED uses SPI1.
-# The stepper is intentionally not part of this runtime yet.
-# Its standalone Pico test remains the verified reference while
-# the timing interaction with the full MQTT/sensor loop is investigated.
+# The stepper uses the same pins and step sequence as the verified
+# standalone Pico test, but advances one step at a time so MQTT and
+# sensor polling can keep running.
 
 import os
 import time
@@ -70,6 +71,8 @@ LED_FREQUENCY = 5000
 LED_DIM = 10000
 LED_BRIGHT = 50000
 
+STEPPER_DELAY = 0.01
+
 
 # ---------- HC-SR04 ----------
 
@@ -100,6 +103,28 @@ status_led = pwmio.PWMOut(
     frequency=LED_FREQUENCY,
     duty_cycle=LED_DIM
 )
+
+
+# ---------- Stepper via ULN2003 ----------
+
+stepper_outputs = []
+
+for pin in (board.GP6, board.GP7, board.GP8, board.GP9):
+    output = digitalio.DigitalInOut(pin)
+    output.direction = digitalio.Direction.OUTPUT
+    output.value = False
+    stepper_outputs.append(output)
+
+stepper_steps = [
+    (True, False, False, False),
+    (False, True, False, False),
+    (False, False, True, False),
+    (False, False, False, True)
+]
+
+stepper_index = 0
+last_stepper_step = 0
+stepper_running = False
 
 
 # ---------- OLED on SPI1 ----------
@@ -288,6 +313,30 @@ def send(command):
     mqtt_client.publish(TOPIC_COMMAND, command)
 
 
+def update_stepper(now):
+    global stepper_index, last_stepper_step, stepper_running
+
+    if player_status != "PLAY":
+        if stepper_running:
+            for output in stepper_outputs:
+                output.value = False
+            stepper_running = False
+        return
+
+    stepper_running = True
+
+    if now - last_stepper_step < STEPPER_DELAY:
+        return
+
+    step = stepper_steps[stepper_index]
+
+    for output, value in zip(stepper_outputs, step):
+        output.value = value
+
+    stepper_index = (stepper_index + 1) % len(stepper_steps)
+    last_stepper_step = now
+
+
 def update_outputs(now):
     global last_oled_state
 
@@ -402,6 +451,7 @@ while True:
 
             last_rfid_check = now
 
+        update_stepper(now)
         update_outputs(now)
         time.sleep(0.02)
 
@@ -410,6 +460,11 @@ while True:
         led.value = False
         status_led.duty_cycle = LED_DIM
         oled_bitmap.fill(1)
+
+        for output in stepper_outputs:
+            output.value = False
+
+        stepper_running = False
         time.sleep(2)
 
         try:
