@@ -19,7 +19,7 @@
 # OLED uses SPI1.
 # The stepper uses the same pins, sequence and 10 ms hold time
 # as the verified standalone Pico test. In PLAY it runs a short
-# 4-step burst, then returns to MQTT/sensor work.
+# 32-step burst, then returns to MQTT/sensor work.
 
 import os
 import time
@@ -72,7 +72,7 @@ LED_DIM = 10000
 LED_BRIGHT = 50000
 
 STEPPER_DELAY = 0.01
-STEPPER_BURST_STEPS = 4
+STEPPER_BURST_STEPS = 32
 
 
 # ---------- HC-SR04 ----------
@@ -161,7 +161,6 @@ oled_tile = displayio.TileGrid(
     oled_bitmap,
     pixel_shader=oled_palette
 )
-
 oled_group.append(oled_tile)
 
 
