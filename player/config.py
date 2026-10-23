@@ -35,7 +35,9 @@ STEPPER_REVERSE = True     # reversed step order = correct platter direction
 I2C_SCL = "D3"
 I2C_SDA = "D2"
 BH1750_ADDRESS = 0x23
-LIGHT_THRESHOLD = 100        # lux: below = tonearm REST, above = PLAY
+# Temporary evening calibration: REST ~= 0.00-0.83 lux, PLAY test ~= 2.50 lux.
+# Recalibrate this value in normal daylight before the final demo.
+LIGHT_THRESHOLD = 1.5
 
 # PWM status LED
 LED_PIN = "D12"
