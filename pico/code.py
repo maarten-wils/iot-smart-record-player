@@ -17,9 +17,8 @@
 #
 # SPI0 is shared by MCP3008 and RC522.
 # OLED uses SPI1.
-# The stepper uses the same pins and step sequence as the verified
-# standalone Pico test. If the main loop is delayed by sensor/MQTT work,
-# it catches up a few missed 10 ms steps so the motor keeps moving.
+# The stepper uses the same pins, sequence and 10 ms hold time
+# as the verified standalone Pico test.
 
 import os
 import time
@@ -72,7 +71,6 @@ LED_DIM = 10000
 LED_BRIGHT = 50000
 
 STEPPER_DELAY = 0.01
-STEPPER_MAX_CATCHUP = 8
 
 
 # ---------- HC-SR04 ----------
@@ -124,7 +122,6 @@ stepper_steps = [
 ]
 
 stepper_index = 0
-last_stepper_step = 0
 stepper_running = False
 
 
@@ -314,19 +311,8 @@ def send(command):
     mqtt_client.publish(TOPIC_COMMAND, command)
 
 
-def apply_stepper_step():
-    global stepper_index
-
-    step = stepper_steps[stepper_index]
-
-    for output, value in zip(stepper_outputs, step):
-        output.value = value
-
-    stepper_index = (stepper_index + 1) % len(stepper_steps)
-
-
-def update_stepper(now):
-    global last_stepper_step, stepper_running
+def update_stepper():
+    global stepper_index, stepper_running
 
     if player_status != "PLAY":
         if stepper_running:
@@ -335,24 +321,16 @@ def update_stepper(now):
             stepper_running = False
         return
 
-    if not stepper_running:
-        stepper_running = True
-        last_stepper_step = now
-        apply_stepper_step()
-        return
+    stepper_running = True
+    step = stepper_steps[stepper_index]
 
-    steps_due = int((now - last_stepper_step) / STEPPER_DELAY)
+    for output, value in zip(stepper_outputs, step):
+        output.value = value
 
-    if steps_due <= 0:
-        return
+    stepper_index = (stepper_index + 1) % len(stepper_steps)
 
-    if steps_due > STEPPER_MAX_CATCHUP:
-        steps_due = STEPPER_MAX_CATCHUP
-
-    for _ in range(steps_due):
-        apply_stepper_step()
-
-    last_stepper_step += steps_due * STEPPER_DELAY
+    # Same hold time as the verified standalone test.
+    time.sleep(STEPPER_DELAY)
 
 
 def update_outputs(now):
@@ -465,9 +443,8 @@ while True:
 
             last_rfid_check = now
 
-        update_stepper(now)
+        update_stepper()
         update_outputs(now)
-        time.sleep(0.001)
 
     except (OSError, MQTT.MMQTTException) as e:
         print("MQTT error:", e, "- reconnecting")
