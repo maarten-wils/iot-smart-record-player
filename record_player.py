@@ -110,6 +110,9 @@ def main():
                     if last_status == state.PAUSED and not record_changed:
                         audio.resume()
                     else:
+                        # Apply the latest knob volume to the active audio sink
+                        # immediately before playback starts.
+                        audio.set_volume(volume)
                         audio.play(record["path"])
                         thingspeak.log_now_playing(
                             record["artist"],
@@ -126,6 +129,7 @@ def main():
 
             # The song ended by itself: start it again (like a record on repeat).
             if status == state.PLAY and audio.finished():
+                audio.set_volume(volume)
                 audio.play(record["path"])
 
             # 4. A new AI fact arrived: share it.
