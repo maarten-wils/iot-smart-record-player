@@ -246,7 +246,8 @@ def message(client, topic, msg):
 
 
 CONNECT_TIMEOUT = 2
-LOOP_TIMEOUT = 0.05
+# Keep the MQTT loop short enough for the stepper's 10 ms cadence.
+LOOP_TIMEOUT = 0.005
 
 mqtt_client = MQTT.MQTT(
     broker=MQTT_HOST,
@@ -453,7 +454,7 @@ while True:
 
         update_stepper(now)
         update_outputs(now)
-        time.sleep(0.02)
+        time.sleep(0.001)
 
     except (OSError, MQTT.MMQTTException) as e:
         print("MQTT error:", e, "- reconnecting")
