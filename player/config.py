@@ -58,7 +58,7 @@ ADC_CHANNEL = 0
 VOLUME_DEADBAND = 3                 # % change needed before volume is updated
 # Set USE_VOLUME_KNOB=0 in .env as long as the MCP3008 is not wired yet.
 USE_VOLUME_KNOB = os.getenv("USE_VOLUME_KNOB", "1") == "1"
-DEFAULT_VOLUME = 50                 # % used when the knob is disabled
+DEFAULT_VOLUME = 20                 # safe startup volume before knob data arrives
 
 # ---------- Audio ----------
 RECORDS_FILE = BASE_DIR / "records.json"
