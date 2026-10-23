@@ -18,7 +18,8 @@
 # SPI0 is shared by MCP3008 and RC522.
 # OLED uses SPI1.
 # The stepper uses the same pins, sequence and 10 ms hold time
-# as the verified standalone Pico test.
+# as the verified standalone Pico test. In PLAY it runs a short
+# 4-step burst, then returns to MQTT/sensor work.
 
 import os
 import time
@@ -71,6 +72,7 @@ LED_DIM = 10000
 LED_BRIGHT = 50000
 
 STEPPER_DELAY = 0.01
+STEPPER_BURST_STEPS = 4
 
 
 # ---------- HC-SR04 ----------
@@ -322,15 +324,15 @@ def update_stepper():
         return
 
     stepper_running = True
-    step = stepper_steps[stepper_index]
 
-    for output, value in zip(stepper_outputs, step):
-        output.value = value
+    for _ in range(STEPPER_BURST_STEPS):
+        step = stepper_steps[stepper_index]
 
-    stepper_index = (stepper_index + 1) % len(stepper_steps)
+        for output, value in zip(stepper_outputs, step):
+            output.value = value
 
-    # Same hold time as the verified standalone test.
-    time.sleep(STEPPER_DELAY)
+        stepper_index = (stepper_index + 1) % len(stepper_steps)
+        time.sleep(STEPPER_DELAY)
 
 
 def update_outputs(now):
