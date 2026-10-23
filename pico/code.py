@@ -3,15 +3,14 @@
 #
 # Existing functions kept:
 #   HC-SR04: hand gesture -> TOGGLE
-#   pushbutton: short press -> NEXT, long press -> POWER
-#   onboard LED: player status
+#   pushbutton: POWER on/off
 #   MQTT over WiFi
 #
 # Added hardware:
 #   BH1750 light sensor
 #   MCP3008 + potentiometer
 #   RC522 RFID reader
-#   PWM status LED
+#   PWM power LED
 #   SPI OLED
 #   28BYJ-48 stepper via ULN2003
 #
@@ -59,7 +58,6 @@ TOPIC_RFID = "recordplayer/rfid"
 TRIGGER_DISTANCE = 10
 RELEASE_DISTANCE = 15
 HOLD_TIME = 1.0
-LONG_PRESS = 1.5
 DEBOUNCE = 0.05
 
 PUBLISH_INTERVAL = 1.0
@@ -92,13 +90,15 @@ button.direction = digitalio.Direction.INPUT
 button.pull = digitalio.Pull.UP
 
 
-# ---------- Onboard status LED ----------
+# ---------- Onboard Pico LED ----------
 
+# No status function: the external PWM LED is the only player LED.
 led = digitalio.DigitalInOut(board.LED)
 led.direction = digitalio.Direction.OUTPUT
+led.value = False
 
 
-# ---------- PWM status LED ----------
+# ---------- PWM power LED ----------
 
 status_led = pwmio.PWMOut(
     board.GP12,
@@ -338,14 +338,8 @@ def update_stepper():
 def update_outputs(now):
     global last_oled_state
 
-    if player_status == "PLAY":
-        led.value = True
-    elif player_status == "PAUSED":
-        led.value = int(now * 2) % 2 == 0
-    else:
-        led.value = False
-
-    if player_status == "PLAY":
+    # The external PWM LED only shows player power.
+    if player_status in ("REST", "PLAY", "PAUSED"):
         status_led.duty_cycle = LED_BRIGHT
     else:
         status_led.duty_cycle = LED_DIM
@@ -366,8 +360,8 @@ def update_outputs(now):
 
 close_since = None
 armed = True
-pressed_since = None
-long_sent = False
+button_pressed_since = None
+button_power_sent = False
 last_publish = 0
 last_rfid_check = 0
 last_rfid_uid = None
@@ -391,20 +385,19 @@ while True:
             close_since = None
             armed = True
 
+        # One button function only: toggle player power on/off.
         if not button.value:
-            if pressed_since is None:
-                pressed_since = now
-            elif not long_sent and now - pressed_since >= LONG_PRESS:
+            if button_pressed_since is None:
+                button_pressed_since = now
+            elif (
+                not button_power_sent
+                and now - button_pressed_since >= DEBOUNCE
+            ):
                 send("POWER")
-                long_sent = True
+                button_power_sent = True
         else:
-            if pressed_since is not None:
-                held = now - pressed_since
-                if not long_sent and held >= DEBOUNCE:
-                    send("NEXT")
-
-            pressed_since = None
-            long_sent = False
+            button_pressed_since = None
+            button_power_sent = False
 
         if now - last_publish >= PUBLISH_INTERVAL:
             if distance is not None:
