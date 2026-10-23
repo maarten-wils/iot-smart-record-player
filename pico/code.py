@@ -18,8 +18,8 @@
 # SPI0 is shared by MCP3008 and RC522.
 # OLED uses SPI1.
 # The stepper uses the same pins and step sequence as the verified
-# standalone Pico test, but advances one step at a time so MQTT and
-# sensor polling can keep running.
+# standalone Pico test. If the main loop is delayed by sensor/MQTT work,
+# it catches up a few missed 10 ms steps so the motor keeps moving.
 
 import os
 import time
@@ -72,6 +72,7 @@ LED_DIM = 10000
 LED_BRIGHT = 50000
 
 STEPPER_DELAY = 0.01
+STEPPER_MAX_CATCHUP = 8
 
 
 # ---------- HC-SR04 ----------
@@ -246,7 +247,6 @@ def message(client, topic, msg):
 
 
 CONNECT_TIMEOUT = 2
-# Keep the MQTT loop short enough for the stepper's 10 ms cadence.
 LOOP_TIMEOUT = 0.005
 
 mqtt_client = MQTT.MQTT(
@@ -314,8 +314,19 @@ def send(command):
     mqtt_client.publish(TOPIC_COMMAND, command)
 
 
+def apply_stepper_step():
+    global stepper_index
+
+    step = stepper_steps[stepper_index]
+
+    for output, value in zip(stepper_outputs, step):
+        output.value = value
+
+    stepper_index = (stepper_index + 1) % len(stepper_steps)
+
+
 def update_stepper(now):
-    global stepper_index, last_stepper_step, stepper_running
+    global last_stepper_step, stepper_running
 
     if player_status != "PLAY":
         if stepper_running:
@@ -324,24 +335,29 @@ def update_stepper(now):
             stepper_running = False
         return
 
-    stepper_running = True
-
-    if now - last_stepper_step < STEPPER_DELAY:
+    if not stepper_running:
+        stepper_running = True
+        last_stepper_step = now
+        apply_stepper_step()
         return
 
-    step = stepper_steps[stepper_index]
+    steps_due = int((now - last_stepper_step) / STEPPER_DELAY)
 
-    for output, value in zip(stepper_outputs, step):
-        output.value = value
+    if steps_due <= 0:
+        return
 
-    stepper_index = (stepper_index + 1) % len(stepper_steps)
-    last_stepper_step = now
+    if steps_due > STEPPER_MAX_CATCHUP:
+        steps_due = STEPPER_MAX_CATCHUP
+
+    for _ in range(steps_due):
+        apply_stepper_step()
+
+    last_stepper_step += steps_due * STEPPER_DELAY
 
 
 def update_outputs(now):
     global last_oled_state
 
-    # Robin's onboard LED behaviour.
     if player_status == "PLAY":
         led.value = True
     elif player_status == "PAUSED":
@@ -349,14 +365,11 @@ def update_outputs(now):
     else:
         led.value = False
 
-    # External PWM LED: bright only in PLAY, dim otherwise.
     if player_status == "PLAY":
         status_led.duty_cycle = LED_BRIGHT
     else:
         status_led.duty_cycle = LED_DIM
 
-    # This OLED is visually inverted with the current DisplayIO palette.
-    # PLAY therefore uses bitmap value 0, REST uses 1.
     if player_status == "PLAY":
         oled_state = 0
     elif player_status == "PAUSED":
