@@ -63,6 +63,10 @@ mqtt.on_connect = on_connect
 mqtt.on_message = on_message
 mqtt.connect()
 
+# After connecting, use the same short socket timeout as the normal runtime.
+mqtt._socket_timeout = 0.005
+mqtt._sock.settimeout(0.005)
+
 print("MQTT stepper test ready")
 
 try:
