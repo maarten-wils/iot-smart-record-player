@@ -58,7 +58,6 @@ TOPIC_RFID = "recordplayer/rfid"
 TRIGGER_DISTANCE = 10
 RELEASE_DISTANCE = 15
 HOLD_TIME = 1.0
-DEBOUNCE = 0.05
 
 PUBLISH_INTERVAL = 1.0
 RFID_INTERVAL = 0.1
@@ -360,8 +359,7 @@ def update_outputs(now):
 
 close_since = None
 armed = True
-button_pressed_since = None
-button_power_sent = False
+button_was_pressed = False
 last_publish = 0
 last_rfid_check = 0
 last_rfid_uid = None
@@ -385,19 +383,13 @@ while True:
             close_since = None
             armed = True
 
-        # One button function only: toggle player power on/off.
-        if not button.value:
-            if button_pressed_since is None:
-                button_pressed_since = now
-            elif (
-                not button_power_sent
-                and now - button_pressed_since >= DEBOUNCE
-            ):
-                send("POWER")
-                button_power_sent = True
-        else:
-            button_pressed_since = None
-            button_power_sent = False
+        # One short press toggles player power. Send once when the
+        # button changes from released to pressed, then wait for release.
+        if not button.value and not button_was_pressed:
+            send("POWER")
+            button_was_pressed = True
+        elif button.value:
+            button_was_pressed = False
 
         if now - last_publish >= PUBLISH_INTERVAL:
             if distance is not None:
