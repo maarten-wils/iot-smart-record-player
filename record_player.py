@@ -33,7 +33,9 @@ def main():
     # The Pi now receives sensor values through MQTT and keeps audio,
     # state handling, ThingSpeak and AI.
     audio = AudioPlayer(config.PAUSE_MODE)
-    audio.set_volume(config.DEFAULT_VOLUME)
+
+    # Start muted until the Pico sends the real potentiometer value.
+    audio.set_volume(0)
 
     # ---------- network ----------
     mqtt_link = MqttLink()
@@ -60,8 +62,9 @@ def main():
     last_status = None
     last_volume = None
     first_lux = True
+    volume_ready = False
     lux = 0.0
-    volume = config.DEFAULT_VOLUME
+    volume = 0
 
     print("Smart Record Player running. Ctrl+C to stop.")
 
@@ -82,6 +85,7 @@ def main():
 
             if mqtt_link.volume is not None:
                 volume = mqtt_link.volume
+                volume_ready = True
 
                 if volume != last_volume:
                     print(f"volume -> {volume}%")
@@ -107,7 +111,9 @@ def main():
                 )
 
                 if status == state.PLAY:
-                    if last_status == state.PAUSED and not record_changed:
+                    if not volume_ready:
+                        print("[audio] waiting for Pico volume")
+                    elif last_status == state.PAUSED and not record_changed:
                         audio.resume()
                     else:
                         # Apply the latest knob volume to the active audio sink
@@ -126,6 +132,11 @@ def main():
                 # Pico uses this retained status for its outputs.
                 mqtt_link.publish_status(status)
                 last_status = status
+
+            # Start playback once the first real volume value arrives while in PLAY.
+            if status == state.PLAY and volume_ready and audio.process is None:
+                audio.set_volume(volume)
+                audio.play(record["path"])
 
             # The song ended by itself: start it again (like a record on repeat).
             if status == state.PLAY and audio.finished():
