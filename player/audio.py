@@ -73,12 +73,13 @@ class AudioPlayer:
 
     @staticmethod
     def set_volume(percent):
-        """Set the PipeWire output volume (0 - 100 %)."""
+        """Set PipeWire output volume and wait until the change is applied."""
         try:
-            subprocess.Popen(
+            subprocess.run(
                 ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", f"{percent / 100:.2f}"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                check=False,
             )
         except FileNotFoundError:
             print("[audio] wpctl not found, volume not changed")
