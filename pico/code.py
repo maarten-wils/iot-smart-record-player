@@ -20,6 +20,7 @@
 # The stepper uses the same pins, sequence and 10 ms hold time
 # as the verified standalone Pico test. In PLAY it runs a short
 # 32-step burst, then returns to MQTT/sensor work.
+# RFID polling is paused during PLAY so it does not interrupt the motor.
 
 import os
 import time
@@ -423,7 +424,9 @@ while True:
 
             last_publish = now
 
-        if now - last_rfid_check >= RFID_INTERVAL:
+        # RFID is only needed while not playing. Polling the RC522 during
+        # PLAY interrupted the stepper enough to make the platter stutter.
+        if player_status != "PLAY" and now - last_rfid_check >= RFID_INTERVAL:
             uid = read_rfid()
 
             if uid is not None:
