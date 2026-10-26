@@ -4,7 +4,7 @@ IoT Essentials team project by Maarten Wils and Robin Wils.
 
 ## Concept
 
-A small record player in which the physical model contains the sensors and outputs. A Raspberry Pi Pico 2 W reads the hardware and communicates with a Raspberry Pi 5 over MQTT. The Pi 5 keeps the player state, audio, ThingSpeak and AI logic.
+A small record player in which the physical model contains the sensors and outputs. A Raspberry Pi Pico 2 W reads the hardware and communicates with a Raspberry Pi 5 over MQTT. The Pi 5 keeps the player state, audio, ThingSpeak and AI/fallback logic.
 
 ## Current architecture
 
@@ -15,8 +15,8 @@ A small record player in which the physical model contains the sensors and outpu
 - MCP3008 + 10k potentiometer (SPI0) -> volume
 - RC522 RFID (shared SPI0) -> record tag
 - SSD1306 OLED (SPI1) -> local status
-- PWM LED -> local status
-- 28BYJ-48 + ULN2003 -> platter motor; standalone verified, runtime integration still open
+- PWM LED -> local player status
+- 28BYJ-48 + ULN2003 -> platter motor
 - WiFi + MQTT
 
 **Raspberry Pi 5**
@@ -27,31 +27,40 @@ A small record player in which the physical model contains the sensors and outpu
 - ThingSpeak integration
 - AI/fallback facts
 
-## Verified hardware status
+## Verified integrated behaviour
 
-All planned Pico hardware is now mounted on one large breadboard and individually verified:
+The complete runtime has been verified in one end-to-end demo:
 
 - Pico WiFi + MQTT
-- HC-SR04 distance + TOGGLE command
-- pushbutton short/long command
-- BH1750 lux publish
-- MCP3008 volume publish and end-to-end Bluetooth volume control
-- RC522 tag detection + debounce
-- MCP3008 and RC522 sharing SPI0
-- PWM LED reacts to player status
-- OLED reacts to PLAY / REST / PAUSED
-- 28BYJ-48 + ULN2003 stepper standalone
+- BH1750 REST / PLAY detection
+- HC-SR04 TOGGLE gesture for PLAY / PAUSED
+- pushbutton POWER for STANDBY / active player
+- MCP3008 volume -> MQTT -> Pi -> Bluetooth speaker
+- RC522 RFID selection for two different records
+- OLED reacts to REST / PLAY / PAUSED and blinks in PAUSED
+- PWM LED is bright while active and dim in STANDBY
+- stepper platter runs in PLAY and stops outside PLAY
+- Bluetooth audio starts/stops/pauses/resumes with player state
+- ThingSpeak MQTT connection and field updates
+- full integrated demo completed in one run and recorded on video
 
-The full `pico/code.py` runtime was also verified with WiFi/MQTT, HC-SR04, pushbutton, BH1750, MCP3008, RC522, OLED and PWM LED active together. The stepper remains intentionally outside the full runtime while its MQTT timing issue is investigated.
+Current RFID mappings:
 
-Open before final demo:
+- `d5293d0a` -> Emma M. Andersson - Megasong
+- `c5e63f0a` -> Al Jolson - Avalon (1920)
 
-- integrate stepper smoothly into the Pico runtime
-- build the working large-breadboard prototype into the LEGO housing
-- recalibrate REST / PLAY lux thresholds after mounting
-- reconnect/test ThingSpeak credentials
-- final RFID -> record selection flow
-- final full-system repeatability test after physical mounting
+Current BH1750 threshold:
+
+- `LIGHT_THRESHOLD = 4.0`
+- REST observed around 0.8-1.7 lux
+- PLAY observed from about 4.2 lux upward in the current setup
+
+## Remaining work
+
+- visually verify the ThingSpeak dashboard when channel access is available
+- review/finalize report, setup photo, schematic and self-evaluation
+- optional OLED improvement: show clearer state, artist/title and/or AI/fallback fact
+- optional physical/LEGO finishing if time remains
 
 ## Run
 
@@ -92,7 +101,7 @@ wpctl status
 ## Documentation
 
 - `docs/pinout.md` - current wiring
-- `docs/testing.md` - verified tests and open tests
+- `docs/testing.md` - physically verified tests and remaining checks
 - `docs/project-definition.md` - short project definition
 - `docs/block-schematic.svg` - current architecture
 - `docs/report-draft.md` - concise report draft
