@@ -68,7 +68,7 @@ PAUSE_MODE = os.getenv("PAUSE_MODE", "signal")   # "signal" = real pause, "resta
 MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 
-TOPIC_COMMAND = "recordplayer/remote/command"    # Pico -> Pi: TOGGLE / NEXT / POWER
+TOPIC_COMMAND = "recordplayer/remote/command"    # Pico -> Pi: TOGGLE / POWER (NEXT is legacy/internal only)
 TOPIC_DISTANCE = "recordplayer/remote/distance"  # Pico -> Pi: cm
 TOPIC_STATUS = "recordplayer/status"             # Pi -> all: STANDBY / REST / PLAY / PAUSED
 TOPIC_NOW_PLAYING = "recordplayer/now_playing"   # Pi -> all: JSON artist/title/fact
