@@ -21,6 +21,7 @@
 # 32-step burst, then returns to MQTT/sensor work.
 # RFID polling is paused during PLAY so it does not interrupt the motor.
 
+import json
 import os
 import time
 import board
@@ -28,12 +29,14 @@ import busio
 import digitalio
 import pwmio
 import displayio
+import terminalio
 import wifi
 import socketpool
 
 from fourwire import FourWire
 import adafruit_hcsr04
 import adafruit_displayio_ssd1306
+from adafruit_display_text import label
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
 import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
@@ -51,6 +54,7 @@ MQTT_CLIENT_ID = "recordplayer-pico"
 TOPIC_COMMAND = "recordplayer/remote/command"
 TOPIC_DISTANCE = "recordplayer/remote/distance"
 TOPIC_STATUS = "recordplayer/status"
+TOPIC_NOW_PLAYING = "recordplayer/now_playing"
 TOPIC_LUX = "recordplayer/lux"
 TOPIC_VOLUME = "recordplayer/volume"
 TOPIC_RFID = "recordplayer/rfid"
@@ -153,18 +157,40 @@ display = adafruit_displayio_ssd1306.SSD1306(
 oled_group = displayio.Group()
 display.root_group = oled_group
 
-oled_bitmap = displayio.Bitmap(128, 64, 1)
-oled_palette = displayio.Palette(1)
-oled_palette[0] = 0xFFFFFF
-
-oled_tile = displayio.TileGrid(
-    oled_bitmap,
-    pixel_shader=oled_palette
+oled_status = label.Label(
+    terminalio.FONT,
+    text="OFF",
+    color=0xFFFFFF,
+    scale=2,
+    x=5,
+    y=14
 )
-oled_group.append(oled_tile)
 
+oled_line1 = label.Label(
+    terminalio.FONT,
+    text="",
+    color=0xFFFFFF,
+    scale=1,
+    x=2,
+    y=38
+)
+
+oled_line2 = label.Label(
+    terminalio.FONT,
+    text="",
+    color=0xFFFFFF,
+    scale=1,
+    x=2,
+    y=52
+)
+
+oled_group.append(oled_status)
+oled_group.append(oled_line1)
+oled_group.append(oled_line2)
 
 player_status = "OFFLINE"
+now_playing_artist = ""
+now_playing_title = ""
 last_oled_state = None
 
 
@@ -228,6 +254,7 @@ pool = socketpool.SocketPool(wifi.radio)
 def connect(client, userdata, flags, rc):
     print("Connected to MQTT broker", MQTT_HOST)
     client.subscribe(TOPIC_STATUS)
+    client.subscribe(TOPIC_NOW_PLAYING)
 
 
 def disconnect(client, userdata, rc):
@@ -235,13 +262,21 @@ def disconnect(client, userdata, rc):
 
 
 def message(client, topic, msg):
-    global player_status
+    global player_status, now_playing_artist, now_playing_title
 
-    if topic != TOPIC_STATUS:
+    if topic == TOPIC_STATUS:
+        print("Status from Pi:", msg)
+        player_status = msg
         return
 
-    print("Status from Pi:", msg)
-    player_status = msg
+    if topic == TOPIC_NOW_PLAYING:
+        try:
+            data = json.loads(msg)
+            now_playing_artist = data.get("artist", "")
+            now_playing_title = data.get("title", "")
+            print("Now playing:", now_playing_artist, "-", now_playing_title)
+        except (ValueError, TypeError):
+            print("Invalid now-playing message")
 
 
 CONNECT_TIMEOUT = 2
@@ -344,14 +379,27 @@ def update_outputs(now):
         status_led.duty_cycle = LED_DIM
 
     if player_status == "PLAY":
-        oled_state = 0
+        screen_status = "PLAY"
+        line1 = now_playing_artist[:20]
+        line2 = now_playing_title[:20]
     elif player_status == "PAUSED":
-        oled_state = 0 if int(now * 2) % 2 == 0 else 1
+        screen_status = "PAUSE"
+        line1 = now_playing_artist[:20]
+        line2 = now_playing_title[:20]
+    elif player_status == "REST":
+        screen_status = "REST"
+        line1 = "Ready"
+        line2 = ""
     else:
-        oled_state = 1
+        screen_status = "OFF"
+        line1 = "Standby"
+        line2 = ""
 
+    oled_state = (screen_status, line1, line2)
     if oled_state != last_oled_state:
-        oled_bitmap.fill(oled_state)
+        oled_status.text = screen_status
+        oled_line1.text = line1
+        oled_line2.text = line2
         last_oled_state = oled_state
 
 
@@ -439,7 +487,8 @@ while True:
         print("MQTT error:", e, "- reconnecting")
         led.value = False
         status_led.duty_cycle = LED_DIM
-        oled_bitmap.fill(1)
+        player_status = "OFFLINE"
+        last_oled_state = None
 
         for output in stepper_outputs:
             output.value = False
