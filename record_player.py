@@ -92,7 +92,35 @@ def main():
                     audio.set_volume(volume)
                     last_volume = volume
 
-            # 2. Commands from the Pico remote.
+            # 2. RFID record selection.
+            rfid_uid = mqtt_link.next_rfid()
+            while rfid_uid:
+                matched_index = next(
+                    (
+                        index
+                        for index, item in enumerate(records)
+                        if item.get("rfid_uid", "").lower() == rfid_uid.lower()
+                    ),
+                    None,
+                )
+
+                if matched_index is None:
+                    print(f"[rfid] unknown tag: {rfid_uid}")
+                else:
+                    player_state.record_index = matched_index
+                    player_state.paused = False
+                    record_changed = True
+                    select_record(matched_index)
+
+                    selected = records[matched_index]
+                    print(
+                        f"[rfid] selected record {matched_index + 1}: "
+                        f"{selected['artist']} - {selected['title']}"
+                    )
+
+                rfid_uid = mqtt_link.next_rfid()
+
+            # 3. Commands from the Pico remote.
             command = mqtt_link.next_command()
             while command:
                 if player_state.handle_command(command):

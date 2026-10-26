@@ -37,7 +37,7 @@ I2C_SDA = "D2"
 BH1750_ADDRESS = 0x23
 # Temporary evening calibration: REST ~= 0.00-0.83 lux, PLAY test ~= 2.50 lux.
 # Recalibrate this value in normal daylight before the final demo.
-LIGHT_THRESHOLD = 1.5
+LIGHT_THRESHOLD = 4.0
 
 # PWM status LED
 LED_PIN = "D12"

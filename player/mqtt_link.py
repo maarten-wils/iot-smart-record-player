@@ -17,6 +17,7 @@ from . import config
 class MqttLink:
     def __init__(self, client_id="recordplayer-pi"):
         self.commands = queue.Queue()
+        self.rfid_events = queue.Queue()
         self.distance = None   # last distance from the Pico, in cm
         self.lux = None
         self.volume = None
@@ -83,6 +84,7 @@ class MqttLink:
 
         elif msg.topic == config.TOPIC_RFID:
             self.rfid_uid = payload
+            self.rfid_events.put(payload)
             print(f"[mqtt] RFID: {payload}")
 
     # ---------- used by the main loop ----------
@@ -90,6 +92,13 @@ class MqttLink:
         """Return the next waiting command, or None."""
         try:
             return self.commands.get_nowait()
+        except queue.Empty:
+            return None
+
+    def next_rfid(self):
+        """Return the next RFID UID received from the Pico, or None."""
+        try:
+            return self.rfid_events.get_nowait()
         except queue.Empty:
             return None
 
