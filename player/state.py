@@ -4,15 +4,18 @@ Pure logic without hardware, so it can be unit tested on any computer
 (see tests/test_state.py).
 
 States:
-    STANDBY  power switched off with the remote's button (long press)
+    STANDBY  power switched off with the remote's button
     REST     tonearm on its rest (dark BH1750)
     PLAY     tonearm on the record (light BH1750)
     PAUSED   tonearm on the record, paused with a hand gesture
 
-Commands from the Pico remote (MQTT):
+Current Pico commands over MQTT:
     TOGGLE   pause / resume (only while the tonearm is on the record)
-    NEXT     select the next record
     POWER    standby on / off
+
+Legacy/internal command:
+    NEXT     still supported and unit tested, but not sent by the current Pico;
+             record selection in the final setup is done through RFID.
 """
 
 STANDBY = "STANDBY"
