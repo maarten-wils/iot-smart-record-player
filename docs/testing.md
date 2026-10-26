@@ -7,16 +7,15 @@ Only physically verified behaviour is marked PASS.
 | Test | Status | Evidence |
 | --- | --- | --- |
 | BH1750 I2C | PASS | changing lux values |
-| HC-SR04 | PASS | changing distance + TOGGLE command |
-| pushbutton | PASS | NEXT and POWER commands |
-| MCP3008 + pot | PASS | changing volume up to 100% |
-| RC522 | PASS | UID read |
-| MCP3008 + RC522 shared SPI0 | PASS | both work together in full runtime |
-| PWM LED | PASS | PLAY bright, REST/PAUSED dim |
-| OLED SPI1 | PASS | PLAY / PAUSED status reaction |
-| stepper standalone | PASS | rotates with course-style wave drive |
-| full Pico runtime without stepper | PASS | WiFi, MQTT, HC-SR04, button, BH1750, MCP3008, RC522, OLED and PWM LED active together |
-| stepper in full Pico runtime | OPEN | MQTT timing causes poor motion |
+| HC-SR04 | PASS | changing distance + TOGGLE gesture |
+| pushbutton | PASS | POWER toggles STANDBY / active player |
+| MCP3008 + potentiometer | PASS | changing volume values end-to-end |
+| RC522 RFID | PASS | stable UID reads for two different tags |
+| MCP3008 + RC522 shared SPI0 | PASS | both work together in integrated runtime |
+| PWM LED | PASS | active player bright, STANDBY dim |
+| OLED SPI1 | PASS | reacts to REST / PLAY / PAUSED; blinks in PAUSED |
+| 28BYJ-48 + ULN2003 stepper | PASS | platter rotates in PLAY and stops outside PLAY |
+| full Pico runtime | PASS | WiFi/MQTT, sensors, RFID, OLED, PWM LED and stepper active together |
 
 ## End-to-end
 
@@ -24,36 +23,42 @@ Only physically verified behaviour is marked PASS.
 | --- | --- |
 | Pico sensors -> MQTT -> Pi | PASS |
 | Pi status -> MQTT -> Pico LED/OLED | PASS |
-| HC-SR04 -> Pico -> MQTT TOGGLE | PASS |
-| pushbutton -> Pico -> MQTT NEXT / POWER | PASS |
+| HC-SR04 -> Pico -> MQTT TOGGLE -> PAUSED/PLAY | PASS |
+| pushbutton -> Pico -> MQTT POWER -> STANDBY/active | PASS |
 | MCP3008 -> Pico -> MQTT -> Pi -> Bluetooth volume | PASS |
-| BH1750 -> Pico -> MQTT -> Pi REST/PLAY -> audio | PASS |
+| BH1750 -> Pico -> MQTT -> Pi REST/PLAY -> motor/audio | PASS |
 | RC522 -> Pico -> MQTT UID publish | PASS |
-| Bluetooth speaker connection + `pw-play` | PASS |
-| RFID -> final record selection | OPEN |
-| ThingSpeak final run | OPEN; credentials were not loaded during last test |
-| full flow with stepper | OPEN |
+| RFID tag 1 -> Megasong selection | PASS |
+| RFID tag 2 -> Avalon selection | PASS |
+| Bluetooth speaker + `pw-play` | PASS |
+| ThingSpeak MQTT connection and publish | PASS |
+| ThingSpeak state/lux/volume/distance/record updates | PASS |
+| ThingSpeak dashboard visual check | PENDING |
+| complete integrated demo in one run | PASS |
 
 ## Current calibration
 
-`LIGHT_THRESHOLD = 100` lux is temporary. During bench testing the sensor crossed this value easily, but values changed strongly with sensor position and ambient light.
+`LIGHT_THRESHOLD = 4.0` lux.
 
-Final REST/PLAY thresholds and possible hysteresis must be calibrated only after the BH1750 is mounted in the final physical prototype.
+Verified during the current physical setup:
 
-## Physical build status
+- REST: approximately 0.8-1.7 lux
+- PLAY: approximately 4.2 lux and higher, commonly 8-30 lux during daytime testing
 
-The complete Pico hardware is currently working on one large breadboard. The next physical step is to integrate this working breadboard into the LEGO housing while keeping the wiring intact.
+The threshold may need recalibration when ambient light or the physical sensor position changes.
+
+## RFID records
+
+- `d5293d0a` -> Emma M. Andersson - Megasong
+- `c5e63f0a` -> Al Jolson - Avalon (1920)
+
+## Current remaining checks
+
+- visually verify the ThingSpeak dashboard when channel access is available
+- update/check remaining project documentation against the integrated runtime
+- optionally improve OLED information display (state, artist/title and/or fact)
+- final repo/code cleanup without changing proven functionality
 
 ## Minimal retained Pico tests
 
-- `test_bh1750_pico.py`
-- `test_hcsr04.py`
-- `test_button.py`
-- `test_mcp3008_pico.py`
-- `test_rfid_pico.py`
-- `test_oled_displayio_pico.py`
-- `test_pwm_led_pico.py`
-- `test_stepper_pico.py`
-- `test_wifi_mqtt.py`
-
-These are standalone verification scripts. `pico/code.py` is the integrated runtime.
+Standalone hardware tests are kept only where they still help troubleshooting. `pico/code.py` is the integrated runtime used for the final demo.
