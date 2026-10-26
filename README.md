@@ -90,13 +90,15 @@ wpctl status
 
 | Topic | Direction | Purpose |
 | --- | --- | --- |
-| `recordplayer/remote/command` | Pico -> Pi | TOGGLE / NEXT / POWER |
+| `recordplayer/remote/command` | Pico -> Pi | TOGGLE / POWER |
 | `recordplayer/remote/distance` | Pico -> Pi | HC-SR04 distance |
 | `recordplayer/lux` | Pico -> Pi | BH1750 lux |
 | `recordplayer/volume` | Pico -> Pi | MCP3008 volume % |
-| `recordplayer/rfid` | Pico -> Pi | RFID UID |
+| `recordplayer/rfid` | Pico -> Pi | RFID UID / record selection |
 | `recordplayer/status` | Pi -> Pico | STANDBY / REST / PLAY / PAUSED / OFFLINE |
 | `recordplayer/now_playing` | Pi -> clients | artist / title / fact |
+
+`NEXT` is still accepted internally by the state machine for compatibility/testing, but the current Pico does not send it. Record selection in the final setup is done through RFID.
 
 ## Documentation
 
