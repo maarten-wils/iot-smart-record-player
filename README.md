@@ -64,6 +64,11 @@ Current BH1750 threshold:
 
 ## Run
 
+Pico dependency for OLED text:
+
+- `adafruit_display_text` from the matching CircuitPython 10.x library bundle must be present under `CIRCUITPY/lib`.
+- On the current Pi this was copied from `~/Downloads/circuitpy-bundle/adafruit-circuitpython-bundle-10.x-mpy-20261010/lib/adafruit_display_text`.
+
 Pico:
 
 ```bash
@@ -113,6 +118,6 @@ wpctl status
 
 Code is kept basic and course-oriented: small steps, standalone hardware tests first, short English comments and no unnecessary abstraction.
 
-Known exception: `pico/lib/mfrc522.py` is the explicitly approved CircuitPython RFID driver needed for the RC522.
+Known exception: `pico/lib/mfrc522.py` is the explicitly approved CircuitPython RFID driver needed for the RC522. The OLED text uses the standard `adafruit_display_text` folder from the CircuitPython library bundle installed on the Pico.
 
 Robin's existing contribution is preserved. Integration changes were limited to what was needed to connect the Pico-based hardware architecture to the existing Pi-side application.
