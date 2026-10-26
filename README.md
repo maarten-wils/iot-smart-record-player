@@ -14,7 +14,7 @@ A small record player in which the physical model contains the sensors and outpu
 - HC-SR04 + pushbutton -> remote commands
 - MCP3008 + 10k potentiometer (SPI0) -> volume
 - RC522 RFID (shared SPI0) -> record tag
-- SSD1306 OLED (SPI1) -> local status
+- SSD1306 OLED (SPI1) -> local status + current artist/title
 - PWM LED -> local player status
 - 28BYJ-48 + ULN2003 -> platter motor
 - WiFi + MQTT
@@ -29,7 +29,7 @@ A small record player in which the physical model contains the sensors and outpu
 
 ## Verified integrated behaviour
 
-The complete runtime has been verified in one end-to-end demo:
+The complete runtime has been verified in end-to-end testing:
 
 - Pico WiFi + MQTT
 - BH1750 REST / PLAY detection
@@ -37,7 +37,7 @@ The complete runtime has been verified in one end-to-end demo:
 - pushbutton POWER for STANDBY / active player
 - MCP3008 volume -> MQTT -> Pi -> Bluetooth speaker
 - RC522 RFID selection for two different records
-- OLED reacts to REST / PLAY / PAUSED and blinks in PAUSED
+- OLED shows REST / PLAY / PAUSE / OFF and current artist/title in PLAY/PAUSE
 - PWM LED is bright while active and dim in STANDBY
 - stepper platter runs in PLAY and stops outside PLAY
 - Bluetooth audio starts/stops/pauses/resumes with player state
@@ -59,7 +59,7 @@ Current BH1750 threshold:
 
 - visually verify the ThingSpeak dashboard when channel access is available
 - review/finalize report, setup photo, schematic and self-evaluation
-- optional OLED improvement: show clearer state, artist/title and/or AI/fallback fact
+- optional real AI integration using a free API option if time remains
 - optional physical/LEGO finishing if time remains
 
 ## Run
@@ -105,6 +105,7 @@ wpctl status
 - `docs/project-definition.md` - short project definition
 - `docs/block-schematic.svg` - current architecture
 - `docs/report-draft.md` - concise report draft
+- `docs/todo.md` - remaining project work
 
 ## Code policy
 
