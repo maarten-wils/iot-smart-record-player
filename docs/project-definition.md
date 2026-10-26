@@ -4,7 +4,7 @@ IoT Essentials 2026 · Team: Maarten Wils, Robin Wils
 
 ## Concept
 
-A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico is mounted with the physical model and reads the sensors and controls the local outputs. The Pi 5 runs the player logic, Bluetooth audio, MQTT broker, ThingSpeak and AI/fallback facts.
+A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico is mounted with the physical prototype and reads the sensors and controls the local outputs. The Pi 5 runs the player logic, Bluetooth audio, MQTT broker, ThingSpeak and AI/fallback facts.
 
 ## Information-Value Loop
 
@@ -34,8 +34,10 @@ A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico
 
 ## Current status
 
-Most Pico hardware and the MQTT/audio flow are verified. The remaining core work is physical integration in the 3D model, final lux calibration, stepper runtime integration, final RFID record selection and final ThingSpeak/full-system verification.
+The integrated runtime is verified end-to-end. Lux controls REST/PLAY, the stepper platter and Bluetooth audio start/stop with player state, the potentiometer controls volume, the HC-SR04 toggles PAUSED/PLAY, the pushbutton controls STANDBY/active state, and two RFID tags select two different records. ThingSpeak MQTT connection and field updates are verified; only the visual dashboard check is still pending shared channel access.
+
+Current calibration: `LIGHT_THRESHOLD = 4.0` lux for the present physical setup.
 
 ## Team contribution
 
-Both team members work on all project aspects. Maarten leads the physical prototype/integration and verification. Robin's existing Pico/Pi software contribution remains preserved; integration changes are only made where required to connect the final architecture.
+Both team members work on the complete project. Maarten leads physical prototype integration, testing and verification. Robin's existing software contribution is preserved; integration changes are limited to what is required to connect the final architecture.
