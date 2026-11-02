@@ -28,7 +28,6 @@
   <text x="725" y="260" font-size="15">record_player.py + state machine</text>
   <text x="725" y="295" font-size="15">Bluetooth audio via PipeWire</text>
   <text x="725" y="330" font-size="15">ThingSpeak integration</text>
-  <text x="725" y="365" font-size="15">AI / fallback artist facts</text>
 
   <rect x="760" y="415" width="300" height="80" rx="10" fill="white" stroke="#6b55b4"/>
   <text x="910" y="447" text-anchor="middle" font-size="16" font-weight="bold">Player states</text>
