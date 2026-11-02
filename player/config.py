@@ -1,7 +1,7 @@
 """Central configuration of the Smart Record Player.
 
 All pins, thresholds and MQTT topics live here, so the other modules
-never contain "magic numbers". Secrets (ThingSpeak, AI key) are read
+never contain "magic numbers". Secrets for external services are read
 from a .env file in the repo root; see .env.example.
 """
 
@@ -71,7 +71,7 @@ MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
 TOPIC_COMMAND = "recordplayer/remote/command"    # Pico -> Pi: TOGGLE / POWER (NEXT is legacy/internal only)
 TOPIC_DISTANCE = "recordplayer/remote/distance"  # Pico -> Pi: cm
 TOPIC_STATUS = "recordplayer/status"             # Pi -> all: STANDBY / REST / PLAY / PAUSED
-TOPIC_NOW_PLAYING = "recordplayer/now_playing"   # Pi -> all: JSON artist/title/fact
+TOPIC_NOW_PLAYING = "recordplayer/now_playing"   # Pi -> all: JSON artist/title
 TOPIC_LUX = "recordplayer/lux"                   # Pico -> Pi: lux
 TOPIC_VOLUME = "recordplayer/volume"             # Pico -> Pi: %
 TOPIC_RFID = "recordplayer/rfid"                 # Pico -> Pi: RFID UID
@@ -84,12 +84,3 @@ THINGSPEAK_CLIENT_ID = os.getenv("THINGSPEAK_CLIENT_ID", "")
 THINGSPEAK_USERNAME = os.getenv("THINGSPEAK_USERNAME", "")
 THINGSPEAK_PASSWORD = os.getenv("THINGSPEAK_PASSWORD", "")
 THINGSPEAK_INTERVAL = float(os.getenv("THINGSPEAK_INTERVAL", "16"))  # free plan: max 1 update / 15 s
-
-# ---------- AI artist facts ----------
-AI_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-AI_API_URL = os.getenv("AI_API_URL", "https://api.anthropic.com/v1/messages")
-AI_MODEL = os.getenv("AI_MODEL", "claude-haiku-5-5")
-AI_TIMEOUT = 15  # seconds
-
-# ---------- Display ----------
-FACT_PAGE_TIME = 3.0  # seconds per page when the fact is longer than the screen
