@@ -105,6 +105,12 @@ wpctl status
 
 `NEXT` is still accepted internally by the state machine for compatibility/testing, but the current Pico does not send it. Record selection in the final setup is done through RFID.
 
+## Record Library app (optional)
+
+The [Record Library app](https://github.com/r-wils/record-library-app) links new RFID tags to audio files from a laptop. It copies the audio to `audio/` on the Pi and writes `audio/library.json`. The player reads those records next to `records.json` and reloads them within 2 seconds after a change, without a restart. A library record with the same tag as a `records.json` record replaces it. Without `library.json` the player only uses `records.json`. `audio/` is in `.gitignore`, so music and the library never end up in git.
+
+Test without hardware: `python3 tests/test_records.py`
+
 ## Documentation
 
 - `docs/pinout.md` - current wiring

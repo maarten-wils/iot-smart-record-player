@@ -19,10 +19,11 @@ from player import config, state
 from player.ai_facts import FactProvider
 from player.audio import AudioPlayer
 from player.mqtt_link import MqttLink
-from player.records import load_records
+from player.records import library_mtime, load_records
 from player.thingspeak import ThingSpeak
 
 LOOP_DELAY = 0.02
+LIBRARY_CHECK_INTERVAL = 2.0   # seconds between checks for a changed library.json
 
 
 def main():
@@ -58,6 +59,37 @@ def main():
 
     select_record(player_state.record_index)
 
+    # ---------- Record Library app ----------
+    # The app writes audio/library.json on this Pi. Reload the records when
+    # that file changes, so a new tag works without restarting the player.
+    last_library_mtime = library_mtime()
+    last_library_check = time.monotonic()
+
+    def reload_records():
+        current = records[player_state.record_index]
+        current_key = (current.get("rfid_uid"), current["path"])
+
+        try:
+            new_records = load_records()
+        except (OSError, ValueError, SystemExit) as error:
+            print(f"[records] reload failed, keeping old list: {error}")
+            return
+
+        # Replace the contents in place: select_record() uses this list.
+        records[:] = new_records
+        player_state.record_count = max(1, len(records))
+
+        # Keep the current record selected when it still exists.
+        player_state.record_index = next(
+            (
+                index
+                for index, item in enumerate(records)
+                if (item.get("rfid_uid"), item["path"]) == current_key
+            ),
+            min(player_state.record_index, len(records) - 1),
+        )
+        print(f"[records] library changed -> {len(records)} record(s)")
+
     # ---------- main loop ----------
     last_status = None
     last_volume = None
@@ -71,6 +103,15 @@ def main():
     try:
         while True:
             record_changed = False
+
+            # 0. Records added or changed with the Record Library app.
+            now = time.monotonic()
+            if now - last_library_check >= LIBRARY_CHECK_INTERVAL:
+                last_library_check = now
+                mtime = library_mtime()
+                if mtime != last_library_mtime:
+                    last_library_mtime = mtime
+                    reload_records()
 
             # 1. Sensor values from the Pico over MQTT.
             if mqtt_link.lux is not None:
