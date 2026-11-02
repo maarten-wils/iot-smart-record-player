@@ -7,7 +7,7 @@ Run from the repo root, without sudo:
 IoT Information-Value Loop:
     create       Pico sensors: BH1750, MCP3008, HC-SR04, button, RFID
     communicate  MQTT: Pico <-> local broker <-> this program -> ThingSpeak
-    analyze      state machine (player/state.py), AI artist facts
+    analyze      state machine (player/state.py) and RFID record selection
     act          audio on Pi; Pico receives status for LED/OLED outputs
 
 All settings are in player/config.py and .env.
@@ -16,7 +16,6 @@ All settings are in player/config.py and .env.
 import time
 
 from player import config, state
-from player.ai_facts import FactProvider
 from player.audio import AudioPlayer
 from player.mqtt_link import MqttLink
 from player.records import library_mtime, load_records
@@ -32,7 +31,7 @@ def main():
 
     # Hardware sensors and local display outputs have moved to the Pico.
     # The Pi now receives sensor values through MQTT and keeps audio,
-    # state handling, ThingSpeak and AI.
+    # state handling and ThingSpeak.
     audio = AudioPlayer(config.PAUSE_MODE)
 
     # Start muted until the Pico sends the real potentiometer value.
@@ -42,20 +41,9 @@ def main():
     mqtt_link = MqttLink()
     thingspeak = ThingSpeak()
 
-    # ---------- AI facts ----------
-    facts = {}            # record index -> fact text
-    new_facts = []        # filled by the AI thread, emptied by the main loop
-
-    def on_fact(index, fact, source):
-        print(f"[ai] fact for record {index + 1} ({source}): {fact}")
-        facts[index] = fact
-        new_facts.append(index)
-
-    fact_provider = FactProvider(on_fact)
-
     def select_record(index):
-        facts[index] = "Loading fun fact..."
-        fact_provider.request(index, records[index])
+        # Share track metadata immediately so the Pico OLED can show it.
+        mqtt_link.publish_now_playing(records[index])
 
     select_record(player_state.record_index)
 
@@ -169,7 +157,7 @@ def main():
                     select_record(player_state.record_index)
                 command = mqtt_link.next_command()
 
-            # 3. React to a new state (or a new record while playing).
+            # 4. React to a new state (or a new record while playing).
             status = player_state.status
             record = records[player_state.record_index]
 
@@ -211,16 +199,6 @@ def main():
             if status == state.PLAY and audio.finished():
                 audio.set_volume(volume)
                 audio.play(record["path"])
-
-            # 4. A new AI fact arrived: share it.
-            while new_facts:
-                index = new_facts.pop(0)
-
-                if index == player_state.record_index:
-                    mqtt_link.publish_now_playing(
-                        records[index],
-                        facts[index]
-                    )
 
             # 5. Online dashboard.
             thingspeak.update(
