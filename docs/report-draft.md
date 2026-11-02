@@ -16,7 +16,7 @@ The Smart Record Player combines a physical record-player model with IoT sensors
 | Communicate | Pico 2 W -> MQTT/WiFi -> Mosquitto on Pi 5; Pi -> ThingSpeak via MQTT |
 | Analyze | player state: STANDBY / REST / PLAY / PAUSED; RFID record selection |
 | Act | Bluetooth audio, PWM LED, OLED, stepper motor |
-| Online / extra | ThingSpeak and AI/fallback artist facts |
+| Online / extra | ThingSpeak |
 
 ## 3. Architecture
 
@@ -36,7 +36,7 @@ Current wiring: `pinout.md`.
   - `d5293d0a` -> Emma M. Andersson - Megasong
   - `c5e63f0a` -> Al Jolson - Avalon (1920)
 - MCP3008 and RFID sharing SPI0
-- SPI1 OLED reacts to REST / PLAY / PAUSED and blinks in PAUSED
+- SPI1 OLED reacts to REST / PLAY / PAUSED
 - PWM LED bright while active and dim in STANDBY
 - 28BYJ-48 stepper runs the platter in PLAY and stops outside PLAY
 - Pi starts, stops, pauses and resumes Bluetooth audio according to player state
@@ -54,7 +54,6 @@ Detailed status: `testing.md`.
 - complete self-evaluation per rubric item with motivation
 - add AI-use disclosure
 - add final demo/video link
-- optionally improve OLED information display with clearer state, artist/title and/or fact
 - optionally finish LEGO appearance if time remains
 
 ## 6. Current rubric coverage
@@ -67,7 +66,6 @@ Detailed status: `testing.md`.
 | SPI analog + OLED | MCP3008 volume + SPI OLED | TESTED |
 | MQTT via Pico | live Pico publish/subscribe | TESTED |
 | Local/online dashboard | OLED tested; ThingSpeak MQTT data publish tested; web view pending | MOSTLY TESTED |
-| AI / extra | fallback facts verified; external AI key optional | TESTED WITH FALLBACK |
 | Presentation/demo | full integrated demo recorded in one run | DONE FOR WORKING PROTOTYPE |
 | Report/video | draft present; final evidence and links still required | OPEN |
 
