@@ -106,8 +106,8 @@ class MqttLink:
         self.last_status = status
         self.client.publish(config.TOPIC_STATUS, status, retain=True)
 
-    def publish_now_playing(self, record, fact):
-        data = {"artist": record["artist"], "title": record["title"], "fact": fact}
+    def publish_now_playing(self, record):
+        data = {"artist": record["artist"], "title": record["title"]}
         self.last_now_playing = json.dumps(data)
         self.client.publish(config.TOPIC_NOW_PLAYING, self.last_now_playing, retain=True)
 
