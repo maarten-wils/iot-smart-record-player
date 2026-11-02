@@ -5,8 +5,6 @@ Layout:
     -----------------------
     Al Jolson
     Avalon (1920)
-    fact line 1          (the AI fact is split into pages
-    fact line 2           that change every few seconds)
 """
 
 import board
@@ -19,7 +17,6 @@ from . import state
 
 WIDTH = 128
 HEIGHT = 64
-FACT_LINES_PER_PAGE = 2
 
 
 class Display:
@@ -49,34 +46,13 @@ class Display:
             text = text[:-1]
         return text + ".."
 
-    def wrap(self, text, width=WIDTH):
-        """Split text into lines that fit the screen width."""
-        draw = ImageDraw.Draw(Image.new("1", (WIDTH, HEIGHT)))
-        lines, current = [], ""
-        for word in text.split():
-            candidate = f"{current} {word}".strip()
-            if self._text_width(draw, candidate) <= width:
-                current = candidate
-            else:
-                if current:
-                    lines.append(current)
-                current = self._fit(draw, word, width)
-        if current:
-            lines.append(current)
-        return lines
-
-    def fact_pages(self, fact):
-        """Group the wrapped fact into pages of FACT_LINES_PER_PAGE lines."""
-        lines = self.wrap(fact) if fact else []
-        return [lines[i:i + FACT_LINES_PER_PAGE] for i in range(0, len(lines), FACT_LINES_PER_PAGE)] or [[]]
-
     # ---------- drawing ----------
-    def show(self, status, volume, artist="", title="", fact_page=None):
+    def show(self, status, volume, artist="", title=""):
         """Draw a full frame. Only sends it to the OLED when something changed."""
         if status == state.STANDBY:
             frame_key = (status,)   # standby screen does not depend on the rest
         else:
-            frame_key = (status, volume, artist, title, tuple(fact_page or []))
+            frame_key = (status, volume, artist, title)
         if frame_key == self._last_frame:
             return
         self._last_frame = frame_key
@@ -96,9 +72,6 @@ class Display:
 
             draw.text((0, 14), self._fit(draw, artist), font=self.font, fill=255)
             draw.text((0, 26), self._fit(draw, title), font=self.font, fill=255)
-
-            for i, line in enumerate(fact_page or []):
-                draw.text((0, 40 + i * 12), line, font=self.font, fill=255)
 
         self.oled.image(image)
         self.oled.show()
