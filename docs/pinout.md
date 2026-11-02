@@ -65,4 +65,4 @@ Potentiometer: one outer leg -> 3.3V, middle -> CH0, other outer leg -> GND.
 
 ## Raspberry Pi 5
 
-No project sensors are currently connected directly to the Pi 5. The Pi runs Mosquitto, player logic, Bluetooth audio, ThingSpeak and AI/fallback facts. Pico and Pi communicate over WiFi/MQTT.
+No project sensors are currently connected directly to the Pi 5. The Pi runs Mosquitto, player logic, Bluetooth audio and ThingSpeak. Pico and Pi communicate over WiFi/MQTT.
