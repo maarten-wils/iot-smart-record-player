@@ -56,7 +56,6 @@ The threshold may need recalibration when ambient light or the physical sensor p
 
 - visually verify the ThingSpeak dashboard when channel access is available
 - update/check remaining project documentation against the integrated runtime
-- optionally improve OLED information display (state, artist/title and/or fact)
 - final repo/code cleanup without changing proven functionality
 
 ## Minimal retained Pico tests
