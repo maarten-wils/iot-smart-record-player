@@ -4,7 +4,7 @@ IoT Essentials team project by Maarten Wils and Robin Wils.
 
 ## Concept
 
-A small record player in which the physical model contains the sensors and outputs. A Raspberry Pi Pico 2 W reads the hardware and communicates with a Raspberry Pi 5 over MQTT. The Pi 5 keeps the player state, audio, ThingSpeak and AI/fallback logic.
+A small record player in which the physical model contains the sensors and outputs. A Raspberry Pi Pico 2 W reads the hardware and communicates with a Raspberry Pi 5 over MQTT. The Pi 5 keeps the player state, audio and ThingSpeak integration.
 
 ## Current architecture
 
@@ -25,7 +25,6 @@ A small record player in which the physical model contains the sensors and outpu
 - `record_player.py` state machine
 - Bluetooth audio through PipeWire
 - ThingSpeak integration
-- AI/fallback facts
 
 ## Verified integrated behaviour
 
@@ -59,7 +58,6 @@ Current BH1750 threshold:
 
 - visually verify the ThingSpeak dashboard when channel access is available
 - review/finalize report, setup photo, schematic and self-evaluation
-- optional real AI integration using a free API option if time remains
 - optional physical/LEGO finishing if time remains
 
 ## Run
@@ -101,7 +99,7 @@ wpctl status
 | `recordplayer/volume` | Pico -> Pi | MCP3008 volume % |
 | `recordplayer/rfid` | Pico -> Pi | RFID UID / record selection |
 | `recordplayer/status` | Pi -> Pico | STANDBY / REST / PLAY / PAUSED / OFFLINE |
-| `recordplayer/now_playing` | Pi -> clients | artist / title / fact |
+| `recordplayer/now_playing` | Pi -> clients | artist / title |
 
 `NEXT` is still accepted internally by the state machine for compatibility/testing, but the current Pico does not send it. Record selection in the final setup is done through RFID.
 
