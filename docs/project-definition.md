@@ -4,7 +4,7 @@ IoT Essentials 2026 · Team: Maarten Wils, Robin Wils
 
 ## Concept
 
-A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico is mounted with the physical prototype and reads the sensors and controls the local outputs. The Pi 5 runs the player logic, Bluetooth audio, MQTT broker, ThingSpeak and AI/fallback facts.
+A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico is mounted with the physical prototype and reads the sensors and controls the local outputs. The Pi 5 runs the player logic, Bluetooth audio, MQTT broker and ThingSpeak.
 
 ## Information-Value Loop
 
@@ -14,7 +14,7 @@ A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico
 | Communicate | Pico -> MQTT over WiFi -> Mosquitto on Pi 5 |
 | Analyze | player state on Pi: STANDBY / REST / PLAY / PAUSED |
 | Act | Bluetooth audio, PWM LED, OLED and stepper platter |
-| Dashboard / extra | ThingSpeak + AI/fallback artist facts |
+| Dashboard / extra | ThingSpeak |
 
 ## Rubric mapping
 
@@ -30,7 +30,6 @@ A small smart record player built around a Pico 2 W and Raspberry Pi 5. The Pico
 | Digital output / motor | 28BYJ-48 + ULN2003 |
 | PWM | status LED |
 | Online dashboard | ThingSpeak |
-| AI | artist facts with fallback data |
 
 ## Current status
 
