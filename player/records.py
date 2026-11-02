@@ -4,12 +4,12 @@ Two sources, combined:
 
 1. records.json in the repo root (in git), the default records:
     {"file": "audio/song.ogg", "artist": "...", "title": "...",
-     "rfid_uid": "a1b2c3d4", "facts": ["optional fallback fact"]}
+     "rfid_uid": "a1b2c3d4"}
 
 2. audio/library.json (optional, NOT in git because audio/ is ignored),
    written by the Record Library app (github.com/r-wils/record-library-app):
     {"rfid": "a1b2c3d4", "file": "audio/song.mp3", "artist": "...",
-     "title": "...", "facts": []}
+     "title": "..."}
 
 Library records are added after the records.json records. When a library
 record uses the same RFID tag as a record in records.json, the library
@@ -61,7 +61,6 @@ def _load_library():
             "file": item["file"],
             "artist": item.get("artist") or "Unknown artist",
             "title": item.get("title") or "Unknown title",
-            "facts": item.get("facts") or [],
             "rfid_uid": uid,
         })
     return records
