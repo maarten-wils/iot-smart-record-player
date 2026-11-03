@@ -1,0 +1,14 @@
+[
+  {
+    "file": "audio/metal.mp3",
+    "artist": "Emma M. Andersson",
+    "title": "Megasong",
+    "rfid_uid": "d5293d0a"
+  },
+  {
+    "file": "audio/avalon-1920.ogg",
+    "artist": "Al Jolson",
+    "title": "Avalon (1920)",
+    "rfid_uid": "c5e63f0a"
+  }
+]

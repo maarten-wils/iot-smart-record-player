@@ -1,0 +1,10 @@
+# secrets
+.env
+settings.toml
+
+# python
+__pycache__/
+*.pyc
+env/
+.venv/
+audio/
