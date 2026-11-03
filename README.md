@@ -115,7 +115,6 @@ Test without hardware: `python3 tests/test_records.py`
 - `docs/testing.md` - physically verified tests and remaining checks
 - `docs/project-definition.md` - short project definition
 - `docs/block-schematic.svg` - current architecture
-- `docs/report-draft.md` - concise report draft
 - `docs/todo.md` - remaining project work
 
 ## Code policy
